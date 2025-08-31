@@ -238,12 +238,6 @@ struct Index {
               .textOverflow({ overflow: TextOverflow.Ellipsis })
               .layoutWeight(1)
             
-            if (this.bookInfo) {
-              Text(`📚 ${this.bookInfo.title}`)
-                .fontSize(12)
-                .fontColor('#007aff')
-                .margin({ left: 8 })
-            }
           }
           .width('100%')
           .margin({ bottom: 12 })

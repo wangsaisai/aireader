@@ -9,10 +9,6 @@ export struct QAComponent {
     Row() {
       if (this.message.type === 'question') {
         Column() {
-          Text('用户')
-            .fontSize(12)
-            .margin({ bottom: 5 })
-          
           Text(this.message.content)
             .fontSize(16)
             .padding(12)
@@ -24,10 +20,6 @@ export struct QAComponent {
         .width('80%')
       } else {
         Column() {
-          Text('AI助手')
-            .fontSize(12)
-            .margin({ bottom: 5 })
-          
           Column() {
             MarkdownRenderer({ content: this.message.content })
           }
