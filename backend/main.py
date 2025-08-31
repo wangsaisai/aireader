@@ -7,6 +7,8 @@ import logging
 import sys
 import os
 import uvicorn
+import time
+from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -69,6 +71,17 @@ app.add_middleware(
     allow_methods=settings.cors_allow_methods,
     allow_headers=settings.cors_allow_headers,
 )
+
+# 添加请求日志中间件
+@app.middleware("http")
+async def log_requests(request, call_next):
+    """记录请求处理时间"""
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    logger.info(f"{timestamp} - Request {request.method} {request.url.path} completed in {process_time:.4f}s")
+    return response
 
 # 添加全局异常处理
 @app.exception_handler(Exception)

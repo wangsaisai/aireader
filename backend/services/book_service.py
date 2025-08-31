@@ -4,6 +4,7 @@ import logging
 from typing import Optional, Dict, Any
 from models.book import BookInfo
 from services.gemini_service import GeminiService
+from utils.conversation_logger import log_conversation
 
 logger = logging.getLogger(__name__)
 
@@ -78,9 +79,12 @@ class BookService:
         # 调用Gemini服务
         book_info = await self.gemini_service.generate_book_info(book_name)
         
-        # 缓存结果
+        # 记录交互
         if book_info:
+            log_conversation(book_name, "Get book info", json.dumps(book_info.dict(), ensure_ascii=False, indent=2))
             self.book_cache[cache_key] = book_info
+        else:
+            log_conversation(book_name, "Get book info", "Failed: Book not found")
         
         return book_info
     
@@ -96,6 +100,10 @@ class BookService:
         # 调用Gemini服务
         answer = await self.gemini_service.answer_question(book_name, question)
         
+        # 记录对话
+        if answer:
+            log_conversation(book_name, question, answer)
+        
         return answer
     
     async def answer_book_question_with_context(self, book_name: str, question: str, context: str = "") -> Optional[str]:
@@ -110,6 +118,10 @@ class BookService:
         # 调用Gemini服务（传入上下文）
         answer = await self.gemini_service.answer_question_with_context(book_name, question, context)
         
+        # 记录对话
+        if answer:
+            log_conversation(book_name, f"{context}\n\nQuestion: {question}", answer)
+
         return answer
 
     async def generate_detailed_report(self, book_name: str, author: Optional[str] = None) -> Optional[str]:
@@ -120,6 +132,12 @@ class BookService:
         
         # 调用Gemini服务生成报告
         report = await self.gemini_service.generate_detailed_report(book_name, author)
+        
+        # 记录交互
+        if report:
+            log_conversation(book_name, "Generate detailed report", report)
+        else:
+            log_conversation(book_name, "Generate detailed report", "Failed: Report generation failed")
         
         return report
     
