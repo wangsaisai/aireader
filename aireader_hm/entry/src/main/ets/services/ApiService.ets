@@ -3,7 +3,7 @@ import { BookInfo, BookInfoData } from '../model/BookInfo'
 import { ChatRequest, ChatMessage as ChatMessageModel } from '../model/ChatModels'
 
 export class ApiService {
-  private static readonly BASE_URL = 'http://localhost:8000'
+  private static readonly BASE_URL = 'http://34.176.0.152:8080'
   
   static async getBookInfo(bookName: string): Promise<BookInfo> {
     try {
