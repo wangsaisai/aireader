@@ -30,3 +30,12 @@ class APIResponse(BaseModel):
     data: Optional[dict] = Field(None, description="响应数据")
     error: Optional[str] = Field(None, description="错误信息")
     message: Optional[str] = Field(None, description="响应消息")
+
+class GenerateReportRequest(BaseModel):
+    """生成详细报告请求数据模型"""
+    book_name: str = Field(..., description="书籍名称")
+    author: Optional[str] = Field(None, description="作者名称")
+
+class GenerateReportResponse(BaseModel):
+    """生成详细报告响应数据模型"""
+    report: str = Field(..., description="生成的详细书籍报告")

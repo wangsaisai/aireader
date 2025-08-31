@@ -361,7 +361,50 @@ struct Index {
   }
 
   async handleSuggestionClick(suggestion: PromptSuggestion) {
-    this.currentInput = suggestion.prompt;
-    await this.processMessage();
+    if (suggestion.id === '7') { // 特殊处理“生成详细书籍报告”
+      await this.generateDetailedReport();
+    } else {
+      this.currentInput = suggestion.prompt;
+      await this.processMessage();
+    }
+  }
+
+  async generateDetailedReport() {
+    if (!this.bookInfo) {
+      return;
+    }
+
+    this.showPromptSuggestions = false;
+    const bookTitle = this.bookInfo.title;
+    const bookAuthor = this.bookInfo.author;
+
+    // 添加用户操作的提示
+    const userMessage = new QAMessage(`正在为《${bookTitle}》生成详细报告...`, 'question');
+    await this.sessionManager.addMessageToCurrentSession(userMessage);
+    this.loadCurrentSession();
+
+    // 提示用户耗时较久
+    const systemMessage = new QAMessage("报告生成中，这可能需要几分钟时间，请耐心等待...", 'answer');
+    await this.sessionManager.addMessageToCurrentSession(systemMessage);
+    this.loadCurrentSession();
+
+    this.isLoading = true;
+
+    try {
+      const report = await ApiService.generateDetailedReport(bookTitle, bookAuthor);
+      const reportMessage = new QAMessage(report, 'answer');
+      await this.sessionManager.addMessageToCurrentSession(reportMessage);
+      this.loadCurrentSession();
+    } catch (error) {
+      const errorMessage = new QAMessage(`生成报告失败：${error.message}`, 'answer');
+      await this.sessionManager.addMessageToCurrentSession(errorMessage);
+      this.loadCurrentSession();
+    } finally {
+      this.isLoading = false;
+      this.updateSessionsFromManager();
+      setTimeout(() => {
+        this.scroller.scrollEdge(Edge.Bottom);
+      }, 100);
+    }
   }
 }

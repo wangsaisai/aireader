@@ -86,17 +86,48 @@ export class ApiService {
       throw new Error(err.message || '网络请求或处理失败')
     }
   }
+  static async generateDetailedReport(bookName: string, author: string | undefined): Promise<string> {
+    try {
+      const httpRequest = http.createHttp()
+      const response = await httpRequest.request(
+        `${ApiService.BASE_URL}/api/chat/generate_report`,
+        {
+          method: http.RequestMethod.POST,
+          header: { 'Content-Type': 'application/json' },
+          extraData: { book_name: bookName, author: author },
+          readTimeout: 180000, // 设置3分钟超时
+          connectTimeout: 5000
+        }
+      )
+      httpRequest.destroy()
+
+      const result = JSON.parse(response.result as string) as ApiResponse
+      if (result.success && result.data) {
+        return (result.data as ReportData).report
+      } else {
+        throw new Error(result.message || result.error || '生成详细报告失败')
+      }
+    } catch (error) {
+      const err = error as Error
+      throw new Error(err.message || '网络请求或处理失败')
+    }
+  }
 }
 
 export interface ApiResponse {
   success: boolean
-  data?: Object | QAData
+  data?: Object | QAData | ReportData
   error?: string
   message?: string
 }
 
+
 export interface QAData {
   answer: string
+}
+
+export interface ReportData {
+  report: string
 }
 
 interface ErrorWithCode {

@@ -3,9 +3,10 @@ from fastapi.responses import JSONResponse
 import json
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
-from api.schemas import BookInfoRequest, QARequest, APIResponse
+from api.schemas import BookInfoRequest, QARequest, APIResponse, GenerateReportRequest
 from services.book_service import BookService
 from services.gemini_service import GeminiService
+from services.chat_memory_service import ChatMemoryService
 from utils.helpers import create_success_response, create_error_response, log_error
 
 router = APIRouter()
@@ -73,6 +74,33 @@ async def answer_question(
         return create_error_response(
             error="Internal server error",
             message="Failed to answer question"
+        )
+
+@router.post("/chat/generate_report", response_model=APIResponse)
+async def generate_detailed_report(
+    request: GenerateReportRequest,
+    book_service: BookService = Depends(get_book_service)
+):
+    """生成详细的书籍报告"""
+    try:
+        report = await book_service.generate_detailed_report(request.book_name, request.author)
+        
+        if report:
+            return create_success_response(
+                data={"report": report},
+                message="Detailed book report generated successfully"
+            )
+        else:
+            return create_error_response(
+                error="No report generated",
+                message="Unable to generate detailed report for the book"
+            )
+            
+    except Exception as e:
+        log_error(e, "Error generating detailed report")
+        return create_error_response(
+            error="Internal server error",
+            message=f"Failed to generate detailed report: {str(e)}"
         )
 
 @router.get("/health")

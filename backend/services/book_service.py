@@ -111,6 +111,17 @@ class BookService:
         answer = await self.gemini_service.answer_question_with_context(book_name, question, context)
         
         return answer
+
+    async def generate_detailed_report(self, book_name: str, author: Optional[str] = None) -> Optional[str]:
+        """生成详细的书籍报告"""
+        # 验证输入
+        if not validate_book_name(book_name):
+            raise ValueError("Invalid book name")
+        
+        # 调用Gemini服务生成报告
+        report = await self.gemini_service.generate_detailed_report(book_name, author)
+        
+        return report
     
     def get_cached_book_info(self, book_name: str) -> Optional[BookInfo]:
         """获取缓存的书籍信息"""
