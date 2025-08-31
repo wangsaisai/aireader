@@ -15,10 +15,10 @@ export interface ClientChatSession {
 export interface ClientSessionManager {
   sessions: ClientChatSession[]
   currentSessionId: string
-  createSession: (title: string, bookName?: string) => ClientChatSession
-  switchSession: (sessionId: string) => void
-  deleteSession: (sessionId: string) => void
+  createSession: (title: string, bookName?: string) => Promise<ClientChatSession>
+  switchSession: (sessionId: string) => Promise<boolean>
+  deleteSession: (sessionId: string) => Promise<boolean>
   getCurrentSession: () => ClientChatSession | null
-  addMessageToCurrentSession: (message: QAMessage) => void
+  addMessageToCurrentSession: (message: QAMessage) => Promise<void>
   getChatHistoryForAPI: (sessionId: string) => ChatMessage[]
 }

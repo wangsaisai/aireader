@@ -39,6 +39,11 @@ HarmonyOS AI读书助手是一个基于ArkTS开发的智能图书阅读应用，
 - ✅ **多轮对话记忆**: 完整的会话管理和消息历史记录
 - ✅ **图标化界面**: 直观的图标按钮设计
 - ✅ **响应式布局**: 适配不同屏幕尺寸和交互需求
+- ✅ **数据持久化**: 使用鸿蒙Preferences API保存会话数据
+- ✅ **应用重启恢复**: 下次打开应用时自动恢复历史会话
+- ✅ **类型安全**: 完整的ArkTS强类型实现，符合编译器要求
+- ✅ **单例模式**: StorageManager单例确保数据管理一致性
+- ✅ **序列化安全**: 完整的数据序列化和反序列化机制
 
 ## 技术实现方案
 
@@ -57,9 +62,12 @@ entry/
 │   │   ├── QAMessage.ets            # 聊天消息模型
 │   │   └── ChatModels.ets           # 对话记忆模型
 │   ├── pages/              # 页面
-│   │   └── Index.ets                # 主页面
+│   │   ├── Index.ets                # 主页面
+│   │   └── TestPersistencePage.ets  # 持久化功能测试页面
 │   ├── services/           # 服务层
-│   │   └── ApiService.ets          # API服务
+│   │   ├── ApiService.ets          # API服务
+│   │   ├── StorageManager.ets      # 数据持久化管理器
+│   │   └── ClientSessionManager.ets # 会话管理器
 │   └── utils/              # 工具类
 │       └── MarkdownUtils.ets        # Markdown解析工具
 ```
@@ -349,7 +357,178 @@ def _build_qa_prompt_with_context(self, book_name: str, question: str, context: 
 请基于这本书的内容和相关信息，准确、详细地回答用户的问题。回答时要考虑之前的对话历史，保持连贯性和上下文关联性。"""
 ```
 
-### 8. 开发注意事项
+### 8. 数据持久化功能
+
+#### 8.1 功能概述
+- ✅ **本地存储**: 使用鸿蒙系统Preferences API保存会话数据
+- ✅ **自动恢复**: 应用重启后自动恢复历史会话记录
+- ✅ **完整性保存**: 保存会话信息、消息历史、书籍信息等完整数据
+- ✅ **向后兼容**: 保持原有AppStorage机制的兼容性
+- ✅ **错误处理**: 完善的存储异常处理和用户提示
+
+#### 8.2 技术架构
+
+##### 存储管理器
+```typescript
+// StorageManager.ets - 单例模式的数据持久化管理器
+export class StorageManager {
+  private static instance: StorageManager
+  private dataStore: preferences.Preferences | null = null
+  private readonly STORE_NAME = 'chat_sessions_store'
+  
+  // 核心方法
+  async saveSessions(sessions: ClientChatSession[]): Promise<boolean>
+  async loadSessions(): Promise<ClientChatSession[]>
+  async saveCurrentSessionId(sessionId: string): Promise<boolean>
+  async loadCurrentSessionId(): Promise<string>
+  async clearAllData(): Promise<boolean>
+}
+```
+
+##### 会话管理器集成
+```typescript
+// ClientSessionManager.ets - 集成持久化功能的会话管理器
+export class ClientSessionManager {
+  private storageManager: StorageManager
+  private isInitialized: boolean = false
+  
+  // 异步初始化
+  private async initializeStorage()
+  
+  // 持久化保存
+  private async saveSessions()
+  
+  // 持久化加载
+  private async loadSessions()
+}
+```
+
+##### 应用生命周期集成
+```typescript
+// EntryAbility.ets - 应用启动时初始化存储
+export default class EntryAbility extends UIAbility {
+  async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
+    // 初始化存储管理器
+    const storageManager = StorageManager.getInstance()
+    await storageManager.init(this.context)
+  }
+}
+```
+
+#### 8.3 数据序列化与反序列化
+
+##### 数据序列化
+```typescript
+// 序列化会话数据为JSON格式
+const serializedSessions = sessions.map(session => ({
+  id: session.id,
+  title: session.title,
+  bookName: session.bookName,
+  bookInfo: session.bookInfo,
+  messages: session.messages.map(msg => ({
+    content: msg.content,
+    type: msg.type,
+    timestamp: msg.timestamp ? msg.timestamp.toISOString() : null
+  })),
+  createdAt: session.createdAt.toISOString(),
+  updatedAt: session.updatedAt.toISOString(),
+  isActive: session.isActive
+}))
+```
+
+##### 数据反序列化
+```typescript
+// 反序列化JSON数据为会话对象
+const sessions: ClientChatSession[] = serializedSessions.map(sessionData => ({
+  id: sessionData.id,
+  title: sessionData.title,
+  bookName: sessionData.bookName,
+  bookInfo: sessionData.bookInfo,
+  messages: (sessionData.messages || []).map((msg: any) => ({
+    content: msg.content,
+    type: msg.type,
+    timestamp: msg.timestamp ? new Date(msg.timestamp) : undefined
+  })),
+  createdAt: new Date(sessionData.createdAt),
+  updatedAt: new Date(sessionData.updatedAt),
+  isActive: sessionData.isActive
+}))
+```
+
+#### 8.4 关键技术解决方案
+
+##### 8.4.1 异步初始化管理
+**问题**: 需要在应用启动时安全地初始化存储系统
+**解决方案**:
+```typescript
+// 使用Promise管理异步初始化
+private initializationPromise: Promise<void>
+
+constructor() {
+  this.storageManager = StorageManager.getInstance()
+  this.initializationPromise = this.initializeStorage()
+}
+
+// 提供初始化完成检查方法
+async ensureInitialized(): Promise<void> {
+  await this.initializationPromise
+}
+```
+
+##### 8.4.2 双重存储机制
+**问题**: 需要保证数据持久化的同时保持向后兼容性
+**解决方案**:
+```typescript
+// 同时保存到AppStorage和持久化存储
+private async saveSessions() {
+  // 保存到AppStorage（向后兼容）
+  AppStorage.Set('chatSessions', this.sessions)
+  AppStorage.Set('currentSessionId', this.currentSessionId)
+  
+  // 保存到持久化存储
+  await this.storageManager.saveSessions(this.sessions)
+  await this.storageManager.saveCurrentSessionId(this.currentSessionId)
+}
+```
+
+##### 8.4.3 数据完整性保证
+**问题**: 需要确保数据在存储和读取过程中的完整性
+**解决方案**:
+```typescript
+// 完整的错误处理和数据验证
+async saveSessions(sessions: ClientChatSession[]): Promise<boolean> {
+  try {
+    // 数据序列化和验证
+    const serializedSessions = sessions.map(session => ({...}))
+    
+    // 原子性保存操作
+    await this.dataStore.put(this.SESSIONS_KEY, JSON.stringify(serializedSessions))
+    await this.dataStore.flush()
+    
+    return true
+  } catch (error) {
+    console.error('Failed to save sessions:', error)
+    return false
+  }
+}
+```
+
+#### 8.5 功能测试
+
+##### 8.5.1 测试覆盖
+- ✅ 存储管理器初始化测试
+- ✅ 会话数据保存和加载测试
+- ✅ 会话ID保存和加载测试
+- ✅ 数据存在性检查测试
+- ✅ 数据清理测试
+
+##### 8.5.2 测试结果
+- ✅ 所有核心功能测试通过
+- ✅ 数据持久化成功
+- ✅ 应用重启后数据正确恢复
+- ✅ 错误处理机制正常工作
+
+### 9. 开发注意事项
 
 #### 7.1 ArkTS语法限制
 - **严格类型检查**: 需要明确定义所有类型
@@ -385,7 +564,7 @@ def _build_qa_prompt_with_context(self, book_name: str, question: str, context: 
 - [ ] 分享功能
 
 ### 3. 技术改进
-- [ ] 本地数据缓存
+- [x] 本地数据缓存
 - [ ] 网络状态检测
 - [ ] 离线模式支持
 - [ ] 性能监控
@@ -394,7 +573,15 @@ def _build_qa_prompt_with_context(self, book_name: str, question: str, context: 
 
 当前版本已实现了HarmonyOS AI读书助手的核心功能，包括书籍查询、智能问答、Markdown渲染等关键技术特性。通过统一聊天界面设计，提供了良好的用户体验。
 
-### 最新版本亮点 (v2.0)
+### 最新版本亮点 (v3.0)
+- **💾 数据持久化**: 使用鸿蒙Preferences API实现真正的本地数据存储
+- **🔄 自动恢复**: 应用重启后自动恢复所有会话历史记录
+- **🛡️ 类型安全**: 完整的ArkTS强类型实现，通过所有编译器检查
+- **🔧 单例架构**: StorageManager单例模式确保数据管理一致性
+- **📊 完整测试**: 专门的测试页面验证所有持久化功能
+- **⚡ 性能优化**: 异步操作确保用户界面响应流畅
+
+### v2.0 版本亮点
 - **🎨 全新UI设计**: 图标化导航界面，更直观的用户交互
 - **📚 智能会话管理**: 自动使用书籍名称作为会话标题，便于识别和管理
 - **⚡ 优化用户体验**: 解决消息重复显示问题，提升交互流畅度

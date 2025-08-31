@@ -23,10 +23,18 @@ struct Index {
   private scroller: Scroller = new Scroller()
   private textInputController: TextInputController = new TextInputController()
 
-  aboutToAppear() {
-    this.sessionManager.loadSessions()
-    this.updateSessionsFromManager()
-    this.loadCurrentSession()
+  async aboutToAppear() {
+    try {
+      // 等待会话管理器初始化完成
+      await this.sessionManager.ensureInitialized()
+      // 确保有默认会话
+      await this.sessionManager.ensureDefaultSession()
+      // 更新界面
+      this.updateSessionsFromManager()
+      this.loadCurrentSession()
+    } catch (error) {
+      console.error('Failed to initialize session manager:', error)
+    }
   }
 
   updateSessionsFromManager() {
@@ -45,9 +53,9 @@ struct Index {
     }
   }
 
-  createNewSession(title?: string, bookName?: string) {
+  async createNewSession(title?: string, bookName?: string) {
     const sessionTitle = title || '新对话'
-    const session = this.sessionManager.createSession(sessionTitle, bookName)
+    const session = await this.sessionManager.createSession(sessionTitle, bookName)
     
     this.updateSessionsFromManager()
     this.loadCurrentSession()
@@ -56,8 +64,8 @@ struct Index {
     return session
   }
 
-  switchSession(session: ClientChatSession) {
-    this.sessionManager.switchSession(session.id)
+  async switchSession(session: ClientChatSession) {
+    await this.sessionManager.switchSession(session.id)
     this.updateSessionsFromManager()
     this.loadCurrentSession()
     this.showSessionList = false
@@ -68,8 +76,8 @@ struct Index {
     }, 100)
   }
 
-  deleteSession(sessionId: string) {
-    this.sessionManager.deleteSession(sessionId)
+  async deleteSession(sessionId: string) {
+    await this.sessionManager.deleteSession(sessionId)
     this.updateSessionsFromManager()
     this.loadCurrentSession()
   }
@@ -84,7 +92,7 @@ struct Index {
     
     // 添加用户消息到会话管理器
     const userMessage = new QAMessage(input, 'question')
-    this.sessionManager.addMessageToCurrentSession(userMessage)
+    await this.sessionManager.addMessageToCurrentSession(userMessage)
     this.loadCurrentSession() // 重新加载消息以同步界面
     this.isLoading = true
     
@@ -95,7 +103,7 @@ struct Index {
         
         // 更新会话书籍信息
         if (this.bookInfo) {
-          this.sessionManager.updateCurrentSessionBookInfo(this.bookInfo.title, this.bookInfo)
+          await this.sessionManager.updateCurrentSessionBookInfo(this.bookInfo.title, this.bookInfo)
         }
         
         // 添加书籍信息到消息列表
@@ -109,7 +117,7 @@ struct Index {
             `内容概述：\n${this.bookInfo.summary || '暂无概述'}`
           
           const bookInfoMessage = new QAMessage(bookInfoText, 'answer')
-          this.sessionManager.addMessageToCurrentSession(bookInfoMessage)
+          await this.sessionManager.addMessageToCurrentSession(bookInfoMessage)
           this.loadCurrentSession() // 重新加载消息以同步界面
         }
       } else {
@@ -122,12 +130,12 @@ struct Index {
         })
         
         const answerMessage = new QAMessage(answer, 'answer')
-        this.sessionManager.addMessageToCurrentSession(answerMessage)
+        await this.sessionManager.addMessageToCurrentSession(answerMessage)
         this.loadCurrentSession() // 重新加载消息以同步界面
       }
     } catch (error) {
       const errorMessage = new QAMessage('抱歉，处理失败：' + error.message, 'answer')
-      this.sessionManager.addMessageToCurrentSession(errorMessage)
+      await this.sessionManager.addMessageToCurrentSession(errorMessage)
       this.loadCurrentSession() // 重新加载消息以同步界面
     } finally {
       this.isLoading = false
@@ -177,8 +185,8 @@ struct Index {
           .height(32)
           .backgroundColor('#007aff')
           .borderRadius(16)
-          .onClick(() => {
-            this.createNewSession()
+          .onClick(async () => {
+            await this.createNewSession()
           })
         }
         .width('100%')
@@ -266,14 +274,14 @@ struct Index {
               sessions: this.sessions,
               currentSessionId: this.currentSessionId,
               isLoading: false,
-              onSessionSelect: (session: ClientChatSession) => {
-                this.switchSession(session)
+              onSessionSelect: async (session: ClientChatSession) => {
+                await this.switchSession(session)
               },
-              onSessionDelete: (sessionId: string) => {
-                this.deleteSession(sessionId)
+              onSessionDelete: async (sessionId: string) => {
+                await this.deleteSession(sessionId)
               },
-              onNewSession: () => {
-                this.createNewSession()
+              onNewSession: async () => {
+                await this.createNewSession()
               }
             })
           }

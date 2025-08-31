@@ -1,13 +1,23 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
+import { StorageManager } from '../services/StorageManager';
 
 const DOMAIN = 0x0000;
 
 export default class EntryAbility extends UIAbility {
-  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+  async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+    
+    // 初始化存储管理器
+    try {
+      const storageManager = StorageManager.getInstance();
+      await storageManager.init(this.context);
+      hilog.info(DOMAIN, 'testTag', '%{public}s', 'StorageManager initialized in EntryAbility');
+    } catch (error) {
+      hilog.error(DOMAIN, 'testTag', 'Failed to initialize StorageManager: %{public}s', JSON.stringify(error));
+    }
   }
 
   onDestroy(): void {
