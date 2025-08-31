@@ -1,4 +1,5 @@
 import { QAMessage } from '../model/QAMessage'
+import { MarkdownRenderer } from './MarkdownRenderer'
 
 @Component
 export struct QAComponent {
@@ -18,29 +19,29 @@ export struct QAComponent {
             .backgroundColor('#007AFF')
             .borderRadius(15)
             .foregroundColor(Color.White)
-            .maxLines(10)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
         }
         .alignItems(HorizontalAlign.End)
-        .width('100%')
+        .width('80%')
       } else {
         Column() {
           Text('AI助手')
             .fontSize(12)
             .margin({ bottom: 5 })
           
-          Text(this.message.content)
-            .fontSize(16)
-            .padding(12)
-            .backgroundColor('#E5E5EA')
-            .borderRadius(15)
-            .maxLines(10)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Column() {
+            MarkdownRenderer({ content: this.message.content })
+          }
+          .padding(12)
+          .backgroundColor('#E5E5EA')
+          .borderRadius(15)
+          .width('100%')
         }
         .alignItems(HorizontalAlign.Start)
-        .width('100%')
+        .width('80%')
       }
     }
     .margin({ bottom: 15 })
+    .width('100%')
+    .justifyContent(this.message.type === 'question' ? FlexAlign.End : FlexAlign.Start)
   }
 }
