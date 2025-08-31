@@ -1,5 +1,6 @@
 import http from '@ohos.net.http'
 import { BookInfo, BookInfoData } from '../model/BookInfo'
+import { ChatRequest, ChatMessage as ChatMessageModel } from '../model/ChatModels'
 
 export class ApiService {
   private static readonly BASE_URL = 'http://localhost:8000'
@@ -51,6 +52,45 @@ export class ApiService {
           extraData: {
             book_name: bookName,
             question: question
+          }
+        }
+      )
+      
+      httpRequest.destroy()
+      
+      if (response.responseCode === 200) {
+        const result = JSON.parse(response.result as string) as ApiResponse
+        if (result.success && result.data) {
+          const qaData = result.data as QAData
+          return qaData.answer
+        } else {
+          throw new Error(result.error || '获取回答失败')
+        }
+      } else {
+        throw new Error(`HTTP错误: ${response.responseCode}`)
+      }
+    } catch (error) {
+      const err = error as Error
+      throw new Error(`网络请求失败: ${err.message}`)
+    }
+  }
+  
+  // ===== 无状态对话API =====
+  
+  static async chatWithHistory(request: ChatRequest): Promise<string> {
+    try {
+      const httpRequest = http.createHttp()
+      const response = await httpRequest.request(
+        `${ApiService.BASE_URL}/api/chat/ask`,
+        {
+          method: http.RequestMethod.POST,
+          header: {
+            'Content-Type': 'application/json'
+          },
+          extraData: {
+            book_name: request.bookName,
+            messages: request.messages,
+            question: request.question
           }
         }
       )
