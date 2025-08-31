@@ -11,6 +11,12 @@ from config.settings import settings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+class GeminiBookInfoError(Exception):
+    """Custom exception for when book info generation fails but we have a text response."""
+    def __init__(self, message, raw_response=None):
+        super().__init__(message)
+        self.raw_response = raw_response
+
 class GeminiService:
     """Google Gemini API服务封装"""
     
@@ -21,7 +27,7 @@ class GeminiService:
             raise ValueError("Google API key is required")
         
         genai.configure(api_key=self.api_key)
-        self.model_name = "gemini-2.0-flash"  # 默认模型
+        self.model_name = "gemini-2.5-flash"  # 默认模型
         self.client = genai.GenerativeModel(self.model_name)
         
         # 可用模型选项
@@ -42,41 +48,51 @@ class GeminiService:
     
     async def generate_book_info(self, book_name: str) -> Optional[BookInfo]:
         """生成书籍信息"""
+        content_text = f"No valid response from Gemini for book: {book_name}"  # Default error
         try:
             prompt = self._build_book_info_prompt(book_name)
-            
-            # 生成配置
+
             config = GenerationConfig(
-                temperature=0.3,  # 较低的温度以获得更准确的信息
+                temperature=0.3,
                 max_output_tokens=4000
             )
-            
-            # 调用Gemini API
+
             response = self.client.generate_content(
                 contents=prompt,
                 generation_config=config
             )
-            
-            # 解析响应
+
             if response and hasattr(response, 'candidates') and response.candidates:
                 candidate = response.candidates[0]
                 if hasattr(candidate, 'content') and candidate.content:
-                    content_text = ''.join(
-                        part.text for part in candidate.content.parts 
-                        if hasattr(part, 'text')
-                    )
-                    
-                    # 解析JSON响应
+                    raw_text = ''.join(part.text for part in candidate.content.parts if hasattr(part, 'text'))
+                    if raw_text:
+                        content_text = raw_text  # Update with actual response
+
                     book_data = clean_json_response(content_text)
                     if book_data:
-                        return BookInfo(**book_data)
-            
-            logger.error(f"Failed to generate book info for: {book_name}")
-            return None
-            
+                        # If the AI reports the book is not found but omits the title,
+                        # we'll inject the user's query as the title to satisfy validation.
+                        if book_data.get('is_found') is False and book_data.get('title') is None:
+                            book_data['title'] = book_name
+                        return BookInfo(**book_data) # Always return the object
+
+            # If we reach here, something went wrong with the API call itself.
+            logger.error(f"Failed to generate valid content for book: {book_name}")
+            # Return a "not found" object as a fallback.
+            return BookInfo(
+                title=book_name,
+                is_found=False,
+                not_found_reason="AI service failed to produce a valid response."
+            )
+
         except Exception as e:
-            logger.error(f"Error generating book info: {str(e)}")
-            return None
+            logger.error(f"Unexpected error in generate_book_info: {str(e)}")
+            return BookInfo(
+                title=book_name,
+                is_found=False,
+                not_found_reason=f"An unexpected error occurred: {str(e)}"
+            )
     
     async def answer_question(self, book_name: str, question: str) -> Optional[str]:
         """回答关于书籍的问题"""
@@ -161,15 +177,19 @@ class GeminiService:
 - language: 语言（书籍的原语言）
 - rating: 评分（如果有的话，0-5分）
 - awards: 获奖情况（获得的重要奖项）
+- is_found: 布尔值，表示是否成功找到书籍
+- not_found_reason: 如果未找到书籍，请说明原因（例如：书籍不存在、名称不明确有多种可能等）
 
 书籍名称：{book_name}
 
 要求：
-1. 请通过搜索获取最新、最准确的书籍信息
-2. 确保信息完整，特别是description和summary字段要详细
-3. 如果某些信息确实无法获取，请将对应字段设为null
-4. 返回格式必须是严格有效的JSON，不要包含任何其他文字说明
-5. year字段必须是字符串格式
+1. 无论是否找到书籍，都必须返回is_found字段
+2. 如果is_found为false，则必须在not_found_reason中提供解释，其他字段可以为null
+3. 请通过搜索获取最新、最准确的书籍信息
+4. 确保信息完整，特别是description和summary字段要详细
+5. 如果某些信息确实无法获取，请将对应字段设为null
+6. 返回格式必须是严格有效的JSON，不要包含任何其他文字说明
+7. year字段必须是字符串格式
 
 请开始搜索并整理信息："""
     

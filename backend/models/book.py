@@ -15,6 +15,8 @@ class BookInfo(BaseModel):
     language: Optional[str] = Field(None, description="语言")
     rating: Optional[str] = Field(None, description="评分")
     awards: Optional[str] = Field(None, description="获奖情况")
+    is_found: bool = Field(..., description="是否找到书籍")
+    not_found_reason: Optional[str] = Field(None, description="未找到书籍的原因")
 
 class QARequest(BaseModel):
     """问答请求数据模型"""

@@ -115,31 +115,36 @@ struct Index {
 
     try {
       if (!this.bookInfo) {
-        // 首次问答：查询书籍信息
-        this.bookInfo = await ApiService.getBookInfo(input)
+        // First, get the complete BookInfo object from the API
+        const fullBookInfo = await ApiService.getBookInfo(input)
 
-        // 更新会话书籍信息
-        if (this.bookInfo) {
+        if (fullBookInfo.is_found) {
+          // Book was found, proceed as before
+          this.bookInfo = fullBookInfo
+
+          // Update session with the found book info
           await this.sessionManager.updateCurrentSessionBookInfo(this.bookInfo.title, this.bookInfo)
-        }
 
-        // 添加书籍信息到消息列表
-        if (this.bookInfo) {
+          // Add book details to the chat
           const bookInfoText = `📚 《${this.bookInfo.title}》\n\n` +
             `作者：${this.bookInfo.author || '未知'}\n` +
             `出版社：${this.bookInfo.publisher || '未知'}\n` +
-            `出版年份：${this.bookInfo.year || '未知'}\n` +
-            `ISBN：${this.bookInfo.isbn || '未知'}\n\n` +
-            `简介：\n${this.bookInfo.description || '暂无简介'}\n\n` +
-            `内容概述：\n${this.bookInfo.summary || '暂无概述'}`
-
+            `出版年份：${this.bookInfo.year || '未知'}\n\n` +
+            `简介：\n${this.bookInfo.description || '暂无简介'}`
           const bookInfoMessage = new QAMessage(bookInfoText, 'answer')
           await this.sessionManager.addMessageToCurrentSession(bookInfoMessage)
-          this.loadCurrentSession() // 重新加载消息以同步界面
-
-          // 推荐问题将在finally块中统一处理
           
+        } else {
+          // Book was not found, display the reason
+          this.bookInfo = null // Ensure no book info is displayed
+          await this.sessionManager.clearCurrentSessionBookInfo()
+          
+          const notFoundMessage = new QAMessage(fullBookInfo.not_found_reason, 'answer')
+          await this.sessionManager.addMessageToCurrentSession(notFoundMessage)
         }
+        
+        this.loadCurrentSession() // Reload session to show new messages
+
       } else {
         // 后续问答：使用新的无状态API
         const chatHistory = this.sessionManager.getCurrentChatHistoryForAPI()
@@ -154,7 +159,12 @@ struct Index {
         this.loadCurrentSession() // 重新加载消息以同步界面
       }
     } catch (error) {
-      const errorMessage = new QAMessage('抱歉，处理失败：' + error.message, 'answer')
+      // When book info fails, the raw LLM response is in error.message.
+      // We display it directly.
+      const errorMessage = new QAMessage(error.message, 'answer')
+      // Ensure bookInfo is null so we don't show prompts or old info.
+      this.bookInfo = null
+      await this.sessionManager.clearCurrentSessionBookInfo()
       await this.sessionManager.addMessageToCurrentSession(errorMessage)
       this.loadCurrentSession() // 重新加载消息以同步界面
     } finally {

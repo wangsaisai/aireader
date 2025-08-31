@@ -210,6 +210,21 @@ export class ClientSessionManager {
       await this.saveSessions()
     }
   }
+
+  async clearCurrentSessionBookInfo(): Promise<void> {
+    const currentSession = this.getCurrentSession()
+    if (currentSession) {
+      currentSession.bookName = undefined
+      currentSession.bookInfo = undefined
+      // Optionally reset title if it was based on the book name
+      if (currentSession.title.startsWith('📚')) {
+        currentSession.title = '新对话'
+      }
+      currentSession.updatedAt = new Date()
+      await this.saveSessions()
+    }
+  }
+
   
   // 获取用于API的聊天历史
   getChatHistoryForAPI(sessionId: string): ChatMessage[] {

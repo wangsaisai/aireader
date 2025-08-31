@@ -12,30 +12,22 @@ export class ApiService {
         `${ApiService.BASE_URL}/api/book/info`,
         {
           method: http.RequestMethod.POST,
-          header: {
-            'Content-Type': 'application/json'
-          },
-          extraData: {
-            book_name: bookName
-          }
+          header: { 'Content-Type': 'application/json' },
+          extraData: { book_name: bookName }
         }
       )
-      
       httpRequest.destroy()
-      
-      if (response.responseCode === 200) {
-        const result = JSON.parse(response.result as string) as ApiResponse
-        if (result.success && result.data) {
-          return new BookInfo(result.data as BookInfoData)
-        } else {
-          throw new Error(result.error || '获取书籍信息失败')
-        }
+
+      const result = JSON.parse(response.result as string) as ApiResponse
+      if (result.success && result.data) {
+        return new BookInfo(result.data as BookInfoData)
       } else {
-        throw new Error(`HTTP错误: ${response.responseCode}`)
+        throw new Error(result.message || result.error || '获取书籍信息失败')
       }
     } catch (error) {
+      // Catch all errors, including network and logical ones from the server.
       const err = error as Error
-      throw new Error(`网络请求失败: ${err.message}`)
+      throw new Error(err.message || '网络请求或处理失败')
     }
   }
   
@@ -46,32 +38,21 @@ export class ApiService {
         `${ApiService.BASE_URL}/api/book/qa`,
         {
           method: http.RequestMethod.POST,
-          header: {
-            'Content-Type': 'application/json'
-          },
-          extraData: {
-            book_name: bookName,
-            question: question
-          }
+          header: { 'Content-Type': 'application/json' },
+          extraData: { book_name: bookName, question: question }
         }
       )
-      
       httpRequest.destroy()
-      
-      if (response.responseCode === 200) {
-        const result = JSON.parse(response.result as string) as ApiResponse
-        if (result.success && result.data) {
-          const qaData = result.data as QAData
-          return qaData.answer
-        } else {
-          throw new Error(result.error || '获取回答失败')
-        }
+
+      const result = JSON.parse(response.result as string) as ApiResponse
+      if (result.success && result.data) {
+        return (result.data as QAData).answer
       } else {
-        throw new Error(`HTTP错误: ${response.responseCode}`)
+        throw new Error(result.message || result.error || '获取回答失败')
       }
     } catch (error) {
       const err = error as Error
-      throw new Error(`网络请求失败: ${err.message}`)
+      throw new Error(err.message || '网络请求或处理失败')
     }
   }
   
@@ -84,9 +65,7 @@ export class ApiService {
         `${ApiService.BASE_URL}/api/chat/ask`,
         {
           method: http.RequestMethod.POST,
-          header: {
-            'Content-Type': 'application/json'
-          },
+          header: { 'Content-Type': 'application/json' },
           extraData: {
             book_name: request.bookName,
             messages: request.messages,
@@ -94,23 +73,17 @@ export class ApiService {
           }
         }
       )
-      
       httpRequest.destroy()
-      
-      if (response.responseCode === 200) {
-        const result = JSON.parse(response.result as string) as ApiResponse
-        if (result.success && result.data) {
-          const qaData = result.data as QAData
-          return qaData.answer
-        } else {
-          throw new Error(result.error || '获取回答失败')
-        }
+
+      const result = JSON.parse(response.result as string) as ApiResponse
+      if (result.success && result.data) {
+        return (result.data as QAData).answer
       } else {
-        throw new Error(`HTTP错误: ${response.responseCode}`)
+        throw new Error(result.message || result.error || '获取回答失败')
       }
     } catch (error) {
       const err = error as Error
-      throw new Error(`网络请求失败: ${err.message}`)
+      throw new Error(err.message || '网络请求或处理失败')
     }
   }
 }
@@ -119,6 +92,7 @@ export interface ApiResponse {
   success: boolean
   data?: Object | QAData
   error?: string
+  message?: string
 }
 
 export interface QAData {

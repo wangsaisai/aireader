@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi.responses import JSONResponse
+import json
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
 from api.schemas import BookInfoRequest, QARequest, APIResponse
@@ -27,40 +29,18 @@ async def get_book_info(
     try:
         book_info = await book_service.get_book_info(request.book_name)
         
-        if book_info:
-            return create_success_response(
-                data={
-                    "title": book_info.title,
-                    "author": book_info.author,
-                    "publisher": book_info.publisher,
-                    "year": book_info.year,
-                    "isbn": book_info.isbn,
-                    "description": book_info.description,
-                    "summary": book_info.summary,
-                    "genre": book_info.genre,
-                    "pages": book_info.pages,
-                    "language": book_info.language,
-                    "rating": book_info.rating,
-                    "awards": book_info.awards
-                },
-                message="Book information retrieved successfully"
-            )
-        else:
-            return create_error_response(
-                error="Book information not found",
-                message="Unable to retrieve book information"
-            )
-            
-    except ValueError as e:
-        return create_error_response(
-            error=str(e),
-            message="Invalid input"
+        # The service now always returns a BookInfo object.
+        # We pass it directly to the response.
+        return create_success_response(
+            data=book_info.dict(),
+            message="Book information retrieved successfully"
         )
+            
     except Exception as e:
         log_error(e, "Error getting book info")
         return create_error_response(
             error="Internal server error",
-            message="Failed to retrieve book information"
+            message=f"Failed to retrieve book information: {str(e)}"
         )
 
 @router.post("/book/qa", response_model=APIResponse)
