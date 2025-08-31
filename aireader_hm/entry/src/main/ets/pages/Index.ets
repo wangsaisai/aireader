@@ -7,6 +7,9 @@ import { ClientSessionManager } from '../services/ClientSessionManager'
 import { QAComponent } from '../components/QAComponent'
 import { LoadingComponent } from '../components/LoadingComponent'
 import { SessionListComponent } from '../components/SessionListComponent'
+import { PromptSuggestion } from '../model/Prompt'
+import { PromptService } from '../services/PromptService'
+import { PromptSuggestions } from '../components/PromptSuggestions'
 
 @Entry
 @Component
@@ -18,6 +21,8 @@ struct Index {
   @State sessions: ClientChatSession[] = []
   @State currentSessionId: string = ''
   @State showSessionList: boolean = false
+  @State showPromptSuggestions: boolean = false
+  private promptSuggestions: PromptSuggestion[] = []
   
   private sessionManager: ClientSessionManager = new ClientSessionManager()
   private scroller: Scroller = new Scroller()
@@ -56,11 +61,12 @@ struct Index {
   async createNewSession(title?: string, bookName?: string) {
     const sessionTitle = title || '新对话'
     const session = await this.sessionManager.createSession(sessionTitle, bookName)
-    
+
     this.updateSessionsFromManager()
     this.loadCurrentSession()
+    this.showPromptSuggestions = false
     this.showSessionList = false
-    
+
     return session
   }
 
@@ -69,7 +75,17 @@ struct Index {
     this.updateSessionsFromManager()
     this.loadCurrentSession()
     this.showSessionList = false
-    
+
+    // 切换会话后，判断是否显示推荐问题
+    // 只要有书本信息，并且至少有过一个问题（即书名查询），就显示推荐
+    const userQuestions = this.messages.filter(m => m.type === 'question').length
+    if (this.bookInfo && userQuestions >= 1) {
+      this.promptSuggestions = PromptService.getBookAnalysisPrompts()
+      this.showPromptSuggestions = true
+    } else {
+      this.showPromptSuggestions = false
+    }
+
     // 滚动到底部
     setTimeout(() => {
       this.scroller.scrollEdge(Edge.Bottom)
@@ -87,25 +103,26 @@ struct Index {
       return
     }
 
+    this.showPromptSuggestions = false // 用户发送新消息时，隐藏推荐
     const input = this.currentInput.trim()
     this.currentInput = ''
-    
+
     // 添加用户消息到会话管理器
     const userMessage = new QAMessage(input, 'question')
     await this.sessionManager.addMessageToCurrentSession(userMessage)
     this.loadCurrentSession() // 重新加载消息以同步界面
     this.isLoading = true
-    
+
     try {
       if (!this.bookInfo) {
         // 首次问答：查询书籍信息
         this.bookInfo = await ApiService.getBookInfo(input)
-        
+
         // 更新会话书籍信息
         if (this.bookInfo) {
           await this.sessionManager.updateCurrentSessionBookInfo(this.bookInfo.title, this.bookInfo)
         }
-        
+
         // 添加书籍信息到消息列表
         if (this.bookInfo) {
           const bookInfoText = `📚 《${this.bookInfo.title}》\n\n` +
@@ -115,10 +132,13 @@ struct Index {
             `ISBN：${this.bookInfo.isbn || '未知'}\n\n` +
             `简介：\n${this.bookInfo.description || '暂无简介'}\n\n` +
             `内容概述：\n${this.bookInfo.summary || '暂无概述'}`
-          
+
           const bookInfoMessage = new QAMessage(bookInfoText, 'answer')
           await this.sessionManager.addMessageToCurrentSession(bookInfoMessage)
           this.loadCurrentSession() // 重新加载消息以同步界面
+
+          // 推荐问题将在finally块中统一处理
+          
         }
       } else {
         // 后续问答：使用新的无状态API
@@ -128,7 +148,7 @@ struct Index {
           messages: chatHistory,
           question: input
         })
-        
+
         const answerMessage = new QAMessage(answer, 'answer')
         await this.sessionManager.addMessageToCurrentSession(answerMessage)
         this.loadCurrentSession() // 重新加载消息以同步界面
@@ -141,7 +161,13 @@ struct Index {
       this.isLoading = false
       // 更新会话列表
       this.updateSessionsFromManager()
-      
+
+      // 如果有书籍信息，则在每次回答后重新显示推荐问题
+      if (this.bookInfo) {
+        this.promptSuggestions = PromptService.getBookAnalysisPrompts()
+        this.showPromptSuggestions = true
+      }
+
       // 延迟滚动到底部，确保内容已渲染
       setTimeout(() => {
         this.scroller.scrollEdge(Edge.Bottom)
@@ -234,6 +260,16 @@ struct Index {
           LoadingComponent()
             .margin({ bottom: 8 })
         }
+
+        // 推荐问题区域
+        if (this.showPromptSuggestions && this.bookInfo) {
+          PromptSuggestions({
+            suggestions: this.promptSuggestions,
+            onSuggestionClick: (suggestion: PromptSuggestion) => {
+              this.handleSuggestionClick(suggestion)
+            }
+          })
+        }
         
         // 底部输入区域
         Row() {
@@ -318,5 +354,10 @@ struct Index {
     
     const session = this.sessions.find(s => s.id === this.currentSessionId)
     return session ? session.title : '未知会话'
+  }
+
+  async handleSuggestionClick(suggestion: PromptSuggestion) {
+    this.currentInput = suggestion.prompt;
+    await this.processMessage();
   }
 }
