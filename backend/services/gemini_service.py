@@ -111,6 +111,39 @@ class GeminiService:
             logger.error(f"Error answering question: {str(e)}")
             return None
     
+    async def answer_question_with_context(self, book_name: str, question: str, context: str = "") -> Optional[str]:
+        """回答关于书籍的问题（带对话上下文）"""
+        try:
+            prompt = self._build_qa_prompt_with_context(book_name, question, context)
+            
+            # 生成配置
+            config = GenerationConfig(
+                temperature=0.5,
+                max_output_tokens=2000
+            )
+            
+            # 调用Gemini API
+            response = self.client.generate_content(
+                contents=prompt,
+                generation_config=config
+            )
+            
+            # 解析响应
+            if response and hasattr(response, 'candidates') and response.candidates:
+                candidate = response.candidates[0]
+                if hasattr(candidate, 'content') and candidate.content:
+                    return ''.join(
+                        part.text for part in candidate.content.parts 
+                        if hasattr(part, 'text')
+                    )
+            
+            logger.error(f"Failed to generate answer for question with context: {question}")
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error answering question with context: {str(e)}")
+            return None
+    
     def _build_book_info_prompt(self, book_name: str) -> str:
         """构建书籍信息查询提示词"""
         return f"""你是一个专业的图书信息查询助手。请根据用户提供的书籍名称，通过搜索获取该书籍的完整详细信息。
@@ -148,6 +181,21 @@ class GeminiService:
 用户问题：{question}
 
 请基于这本书的内容和相关信息，准确、详细地回答用户的问题。如果信息不足，请说明需要更多信息。
+回答要清晰易懂，结构合理。"""
+    
+    def _build_qa_prompt_with_context(self, book_name: str, question: str, context: str) -> str:
+        """构建带上下文的问答提示词"""
+        context_section = f"""
+对话历史：
+{context}
+
+""" if context.strip() else ""
+        
+        return f"""你是一个专业的图书阅读助手，专门回答关于书籍内容的问题。{context_section}书籍名称：{book_name}
+用户问题：{question}
+
+请基于这本书的内容和相关信息，准确、详细地回答用户的问题。回答时要考虑之前的对话历史，保持连贯性和上下文关联性。
+如果信息不足，请说明需要更多信息。
 回答要清晰易懂，结构合理。"""
     
     def _handle_api_error(self, error: Exception) -> str:

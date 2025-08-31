@@ -98,6 +98,20 @@ class BookService:
         
         return answer
     
+    async def answer_book_question_with_context(self, book_name: str, question: str, context: str = "") -> Optional[str]:
+        """回答书籍相关问题（带上下文）"""
+        # 验证输入
+        if not validate_book_name(book_name):
+            raise ValueError("Invalid book name")
+        
+        if not question or not question.strip():
+            raise ValueError("Question cannot be empty")
+        
+        # 调用Gemini服务（传入上下文）
+        answer = await self.gemini_service.answer_question_with_context(book_name, question, context)
+        
+        return answer
+    
     def get_cached_book_info(self, book_name: str) -> Optional[BookInfo]:
         """获取缓存的书籍信息"""
         cache_key = book_name.lower().strip()

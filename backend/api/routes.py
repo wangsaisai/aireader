@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
+from pydantic import BaseModel
 from api.schemas import BookInfoRequest, QARequest, APIResponse
 from services.book_service import BookService
 from services.gemini_service import GeminiService
@@ -145,3 +146,58 @@ async def clear_cache(book_service: BookService = Depends(get_book_service)):
             error="Failed to clear cache",
             message="Internal server error"
         )
+
+# ===== 无状态对话API =====
+
+class ChatMessage(BaseModel):
+    """聊天消息模型"""
+    role: str  # "user" 或 "assistant"
+    content: str
+
+class ChatRequest(BaseModel):
+    """聊天请求模型"""
+    book_name: str
+    messages: List[ChatMessage]
+    question: str
+
+@router.post("/chat/ask", response_model=APIResponse)
+async def chat_with_history(
+    request: ChatRequest,
+    book_service: BookService = Depends(get_book_service)
+):
+    """带历史对话的无状态问答"""
+    try:
+        # 构建对话上下文
+        context_parts = []
+        for msg in request.messages:
+            if msg.role == "user":
+                context_parts.append(f"用户: {msg.content}")
+            elif msg.role == "assistant":
+                context_parts.append(f"助手: {msg.content}")
+        
+        context = "\n".join(context_parts)
+        
+        # 调用问答服务（传入上下文）
+        answer = await book_service.answer_book_question_with_context(
+            request.book_name, 
+            request.question, 
+            context
+        )
+        
+        if answer:
+            return create_success_response(
+                data={"answer": answer},
+                message="Question answered successfully"
+            )
+        else:
+            return create_error_response(
+                error="No answer generated",
+                message="Unable to generate answer for the question"
+            )
+    except Exception as e:
+        log_error(e, "Error in chat with history")
+        return create_error_response(
+            error="Internal server error",
+            message="Failed to answer question"
+        )
+

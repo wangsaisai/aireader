@@ -121,3 +121,8 @@ def create_error_response(error: str, message: str = "Error") -> Dict[str, Any]:
         "error": error,
         "message": message
     }
+
+def generate_id() -> str:
+    """生成唯一ID"""
+    import uuid
+    return str(uuid.uuid4())
