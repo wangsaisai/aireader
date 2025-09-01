@@ -1,6 +1,20 @@
 {
   "app": {
-    "signingConfigs": [],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "storeFile": "/Users/bamboo/workspace/ai/hongmeng/secret/aireader.p12",
+          "storePassword": "00000021B61F168F31052CADED90B3468A40CC47550847D03AB70052703736BC9260A63CA5AA8ABE53CA41417C77913154",
+          "keyAlias": "bambooreader",
+          "keyPassword": "000000213BB9C628166F209C55E798706E3EBDC8BE66767F2BE4210030A18417CB2DBCC743FC02C5B1C014955110137294",
+          "signAlg": "SHA256withECDSA",
+          "profile": "/Users/bamboo/workspace/ai/hongmeng/secret/aireaderRelease.p7b",
+          "certpath": "/Users/bamboo/workspace/ai/hongmeng/secret/aireader-pub.cer"
+        }
+      }
+    ],
     "products": [
       {
         "name": "default",
