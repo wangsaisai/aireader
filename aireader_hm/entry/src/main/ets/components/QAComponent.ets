@@ -1,5 +1,4 @@
 import { QAMessage } from '../model/QAMessage'
-import { MarkdownRenderer } from './MarkdownRenderer'
 
 @Component
 export struct QAComponent {
@@ -21,7 +20,9 @@ export struct QAComponent {
       } else {
         Column() {
           Column() {
-            MarkdownRenderer({ content: this.message.content })
+            Text(this.message.content)
+              .fontSize(16)
+              .foregroundColor(Color.Black)
           }
           .padding(12)
           .backgroundColor('#E5E5EA')

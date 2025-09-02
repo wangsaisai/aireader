@@ -54,8 +54,8 @@ class GeminiService:
             prompt = self._build_book_info_prompt(book_name)
 
             config = GenerationConfig(
-                temperature=0.3,
-                max_output_tokens=4000
+                temperature=0.2,
+                max_output_tokens=8192
             )
 
             response = await asyncio.to_thread(
@@ -103,8 +103,8 @@ class GeminiService:
             
             # 生成配置
             config = GenerationConfig(
-                temperature=0.5,
-                max_output_tokens=2000
+                temperature=0.2,
+                max_output_tokens=8192
             )
             
             # 调用Gemini API
@@ -137,8 +137,8 @@ class GeminiService:
             
             # 生成配置
             config = GenerationConfig(
-                temperature=0.5,
-                max_output_tokens=2000
+                temperature=0.2,
+                max_output_tokens=8192
             )
             
             # 调用Gemini API
@@ -176,7 +176,7 @@ class GeminiService:
 
             # 为长篇报告生成特定配置
             config = GenerationConfig(
-                temperature=0.4,
+                temperature=0.2,
                 max_output_tokens=8192  # 增加Token上限以生成详细报告
             )
 
