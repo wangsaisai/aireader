@@ -2,6 +2,7 @@ import { ClientChatSession } from '../model/ClientChatModels'
 import { QAMessage } from '../model/QAMessage'
 import { ChatMessage } from '../model/ChatModels'
 import { StorageManager } from './StorageManager'
+import { ApiService } from './ApiService'
 
 export class ClientSessionManager {
   private sessions: ClientChatSession[] = []
@@ -152,6 +153,15 @@ export class ClientSessionManager {
     const index = this.sessions.findIndex(s => s.id === sessionId)
     if (index !== -1) {
       this.sessions.splice(index, 1)
+
+      // 同步到后端
+      try {
+        await ApiService.deleteSession(sessionId)
+      } catch (error) {
+        console.error(`Failed to delete session ${sessionId} on backend:`, error)
+        // Note: We proceed with frontend deletion even if backend fails,
+        // to maintain a responsive user experience.
+      }
       
       // 如果删除的是当前会话，切换到第一个会话
       if (sessionId === this.currentSessionId) {

@@ -317,8 +317,24 @@ struct Index {
               onSessionSelect: async (session: ClientChatSession) => {
                 await this.switchSession(session)
               },
-              onSessionDelete: async (sessionId: string) => {
-                await this.deleteSession(sessionId)
+              onSessionDelete: (sessionId: string) => {
+                AlertDialog.show({
+                  title: '确认删除',
+                  message: '您确定要删除这个会话吗？此操作无法撤销。',
+                  primaryButton: {
+                    value: '取消',
+                    action: () => {
+                      console.info('取消删除')
+                    }
+                  },
+                  secondaryButton: {
+                    value: '删除',
+                    fontColor: Color.Red,
+                    action: async () => {
+                      await this.deleteSession(sessionId)
+                    }
+                  }
+                })
               },
               onNewSession: async () => {
                 await this.createNewSession()

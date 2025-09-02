@@ -128,16 +128,17 @@ export struct SessionListComponent {
         .alignItems(HorizontalAlign.Start)
         
         // 删除按钮
-        if (!params.isSelected) {
-          Button('删除')
-            .fontSize(12)
-            .height(24)
-            .width(48)
-            .backgroundColor('#ff4444')
-            .onClick(() => {
+        Button('删除')
+          .fontSize(12)
+          .height(24)
+          .width(48)
+          .backgroundColor(params.isSelected ? '#cccccc' : '#ff4444')
+          .enabled(!params.isSelected)
+          .onClick(() => {
+            if (!params.isSelected) {
               params.onDelete()
-            })
-        }
+            }
+          })
       }
       .width('100%')
       .padding(12)

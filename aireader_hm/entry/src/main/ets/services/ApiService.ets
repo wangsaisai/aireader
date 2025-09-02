@@ -112,6 +112,30 @@ export class ApiService {
       throw new Error(err.message || '网络请求或处理失败')
     }
   }
+
+  static async deleteSession(sessionId: string): Promise<boolean> {
+    try {
+      const httpRequest = http.createHttp()
+      const response = await httpRequest.request(
+        `${ApiService.BASE_URL}/api/chat/session/${sessionId}`,
+        {
+          method: http.RequestMethod.DELETE,
+          header: { 'Content-Type': 'application/json' }
+        }
+      )
+      httpRequest.destroy()
+
+      const result = JSON.parse(response.result as string) as ApiResponse
+      if (result.success) {
+        return true
+      } else {
+        throw new Error(result.message || result.error || '删除会话失败')
+      }
+    } catch (error) {
+      const err = error as Error
+      throw new Error(err.message || '网络请求或处理失败')
+    }
+  }
 }
 
 export interface ApiResponse {
