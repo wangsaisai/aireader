@@ -11,7 +11,7 @@ export struct PromptSuggestions {
     Column() {
       Text('您可以尝试以下问题：')
         .fontSize(14)
-        .fontColor('#999')
+        .fontColor($r('app.color.suggestion_text'))
         .margin({ bottom: 8 })
         .alignSelf(ItemAlign.Start)
 
@@ -19,7 +19,7 @@ export struct PromptSuggestions {
         ForEach(this.suggestions, (item: PromptSuggestion) => {
           Text(item.title)
             .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-            .backgroundColor('#f0f0f0')
+            .backgroundColor($r('app.color.suggestion_bg'))
             .borderRadius(16)
             .fontSize(12)
             .margin({ right: 8, bottom: 8 })

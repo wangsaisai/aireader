@@ -3,6 +3,98 @@
     {
       "name": "start_window_background",
       "value": "#000000"
+    },
+    {
+      "name": "primary_button_bg",
+      "value": "#0a84ff"
+    },
+    {
+      "name": "primary_button_text",
+      "value": "#ffffff"
+    },
+    {
+      "name": "secondary_button_bg",
+      "value": "#333333"
+    },
+    {
+      "name": "primary_text",
+      "value": "#ffffff"
+    },
+    {
+      "name": "secondary_text",
+      "value": "#999999"
+    },
+    {
+      "name": "session_list_bg",
+      "value": "#1c1c1e"
+    },
+    {
+      "name": "session_list_shadow",
+      "value": "#1AFFFFFF"
+    },
+    {
+      "name": "mask_bg",
+      "value": "#99000000"
+    },
+    {
+      "name": "question_bubble_bg",
+      "value": "#0A84FF"
+    },
+    {
+      "name": "question_bubble_text",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "answer_bubble_bg",
+      "value": "#3A3A3C"
+    },
+    {
+      "name": "answer_bubble_text",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "icon_background",
+      "value": "#00000000"
+    },
+    {
+      "name": "suggestion_text",
+      "value": "#999999"
+    },
+    {
+      "name": "suggestion_bg",
+      "value": "#333333"
+    },
+    {
+      "name": "session_item_text_secondary",
+      "value": "#cccccc"
+    },
+    {
+      "name": "session_item_text_tertiary",
+      "value": "#999999"
+    },
+    {
+      "name": "session_item_delete_button_bg",
+      "value": "#ff4444"
+    },
+    {
+      "name": "session_item_delete_button_bg_disabled",
+      "value": "#555555"
+    },
+    {
+      "name": "session_item_bg_selected",
+      "value": "#0A84FF"
+    },
+    {
+      "name": "session_item_bg_unselected",
+      "value": "#1c1c1e"
+    },
+    {
+      "name": "session_item_border_selected",
+      "value": "#0A84FF"
+    },
+    {
+      "name": "session_item_border_unselected",
+      "value": "#333333"
     }
   ]
 }

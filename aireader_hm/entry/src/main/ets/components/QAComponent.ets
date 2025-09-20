@@ -11,9 +11,9 @@ export struct QAComponent {
           Text(this.message.content)
             .fontSize(16)
             .padding(12)
-            .backgroundColor('#007AFF')
+            .backgroundColor($r('app.color.question_bubble_bg'))
             .borderRadius(15)
-            .foregroundColor(Color.White)
+            .foregroundColor($r('app.color.question_bubble_text'))
         }
         .alignItems(HorizontalAlign.End)
         .width('80%')
@@ -22,10 +22,10 @@ export struct QAComponent {
           Column() {
             Text(this.message.content)
               .fontSize(16)
-              .foregroundColor(Color.Black)
+              .foregroundColor($r('app.color.answer_bubble_text'))
           }
           .padding(12)
-          .backgroundColor('#E5E5EA')
+          .backgroundColor($r('app.color.answer_bubble_bg'))
           .borderRadius(15)
           .width('100%')
         }

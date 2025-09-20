@@ -199,7 +199,7 @@ struct Index {
           }
           .width(32)
           .height(32)
-          .backgroundColor('#f0f0f0')
+          .backgroundColor($r('app.color.secondary_button_bg'))
           .onClick(() => {
             this.showSessionList = !this.showSessionList
           })
@@ -215,11 +215,11 @@ struct Index {
             Text('+')
               .fontSize(20)
               .fontWeight(FontWeight.Bold)
-              .fontColor('#ffffff')
+              .fontColor($r('app.color.primary_button_text'))
           }
           .width(32)
           .height(32)
-          .backgroundColor('#007aff')
+          .backgroundColor($r('app.color.primary_button_bg'))
           .borderRadius(16)
           .onClick(async () => {
             await this.createNewSession()
@@ -233,7 +233,7 @@ struct Index {
           Row() {
             Text(this.getCurrentSessionTitle())
               .fontSize(14)
-              .fontColor('#666')
+              .fontColor($r('app.color.secondary_text'))
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
               .layoutWeight(1)
@@ -343,10 +343,10 @@ struct Index {
           }
           .width('80%')
           .height('100%')
-          .backgroundColor('#fff')
+          .backgroundColor($r('app.color.session_list_bg'))
           .shadow({
             radius: 10,
-            color: 'rgba(0,0,0,0.1)',
+            color: $r('app.color.session_list_shadow'),
             offsetX: 2,
             offsetY: 0
           })
@@ -354,7 +354,7 @@ struct Index {
           // 遮罩层
           Blank()
             .layoutWeight(1)
-            .backgroundColor('rgba(0,0,0,0.3)')
+            .backgroundColor($r('app.color.mask_bg'))
             .onClick(() => {
               this.showSessionList = false
             })

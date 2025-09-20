@@ -26,7 +26,7 @@ export struct SessionListComponent {
     Column() {
       // 顶部标题和新建按钮
       Row() {
-        Text('对话会话')
+        Text('对话历史')
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .layoutWeight(1)
@@ -50,7 +50,7 @@ export struct SessionListComponent {
       } else if (this.sessions.length === 0) {
         Text('暂无会话')
           .fontSize(14)
-          .fontColor('#666')
+          .fontColor($r('app.color.secondary_text'))
           .textAlign(TextAlign.Center)
           .margin({ top: 20 })
       } else {
@@ -101,7 +101,7 @@ export struct SessionListComponent {
           if (params.session.bookName) {
             Text(params.session.bookName)
               .fontSize(12)
-              .fontColor('#666')
+              .fontColor($r('app.color.session_item_text_secondary'))
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
               .width('100%')
@@ -113,13 +113,13 @@ export struct SessionListComponent {
           Row() {
             Text(`${params.session.messages.length} 条消息`)
               .fontSize(11)
-              .fontColor('#999')
+              .fontColor($r('app.color.session_item_text_tertiary'))
             
             Blank()
             
             Text(this.formatTime(params.session.updatedAt))
               .fontSize(11)
-              .fontColor('#999')
+              .fontColor($r('app.color.session_item_text_tertiary'))
           }
           .width('100%')
           .margin({ top: 4 })
@@ -132,7 +132,7 @@ export struct SessionListComponent {
           .fontSize(12)
           .height(24)
           .width(48)
-          .backgroundColor(params.isSelected ? '#cccccc' : '#ff4444')
+          .backgroundColor(params.isSelected ? $r('app.color.session_item_delete_button_bg_disabled') : $r('app.color.session_item_delete_button_bg'))
           .enabled(!params.isSelected)
           .onClick(() => {
             if (!params.isSelected) {
@@ -142,11 +142,11 @@ export struct SessionListComponent {
       }
       .width('100%')
       .padding(12)
-      .backgroundColor(params.isSelected ? '#e6f3ff' : '#f5f5f5')
+      .backgroundColor(params.isSelected ? $r('app.color.session_item_bg_selected') : $r('app.color.session_item_bg_unselected'))
       .borderRadius(8)
       .border({
         width: 1,
-        color: params.isSelected ? '#007aff' : '#ddd'
+        color: params.isSelected ? $r('app.color.session_item_border_selected') : $r('app.color.session_item_border_unselected')
       })
     }
     .width('100%')

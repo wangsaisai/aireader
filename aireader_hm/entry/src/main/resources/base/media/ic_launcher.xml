@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon>
+    <background>
+        <color>$color:icon_background</color>
+    </background>
+    <foreground>
+        <image>$media:img</image>
+    </foreground>
+</adaptive-icon>
