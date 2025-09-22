@@ -1,9 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.responses import JSONResponse
 import json
+import os
+import aiofiles
+from datetime import datetime
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
-from api.schemas import BookInfoRequest, QARequest, APIResponse, GenerateReportRequest
+from api.schemas import BookInfoRequest, QARequest, APIResponse, GenerateReportRequest, ComplaintCreate
 from services.book_service import BookService
 from services.gemini_service import GeminiService
 from services.chat_memory_service import ChatMemoryService
@@ -209,3 +212,36 @@ async def chat_with_history(
             message="Failed to answer question"
         )
 
+
+@router.post("/complaint", response_model=APIResponse)
+async def submit_complaint(request: ComplaintCreate):
+    """接收用户投诉"""
+    try:
+        # 在真实应用中，这里应该将投诉信息保存到数据库或专门的日志系统
+        # 为了简单起见，我们只将其记录到文件中
+        complaint_data = {
+            "message_id": request.message_id,
+            "session_id": request.session_id,
+            "reasons": request.reasons,
+            "details": request.details,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        # 将投诉信息异步写入文件
+        log_dir = "complaints"
+        os.makedirs(log_dir, exist_ok=True)
+        file_path = os.path.join(log_dir, f"complaint_{request.message_id}.json")
+        
+        async with aiofiles.open(file_path, mode='w', encoding='utf-8') as f:
+            await f.write(json.dumps(complaint_data, ensure_ascii=False, indent=2))
+            
+        return create_success_response(
+            message="Complaint submitted successfully"
+        )
+        
+    except Exception as e:
+        log_error(e, "Error submitting complaint")
+        return create_error_response(
+            error="Internal server error",
+            message=f"Failed to submit complaint: {str(e)}"
+        )

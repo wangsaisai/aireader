@@ -39,3 +39,11 @@ class GenerateReportRequest(BaseModel):
 class GenerateReportResponse(BaseModel):
     """生成详细报告响应数据模型"""
     report: str = Field(..., description="生成的详细书籍报告")
+
+
+class ComplaintCreate(BaseModel):
+    """投诉创建请求数据模型"""
+    message_id: str = Field(..., description="被投诉的消息ID")
+    session_id: Optional[str] = Field(None, description="会话ID")
+    reasons: List[str] = Field(..., description="投诉原因列表")
+    details: Optional[str] = Field(None, description="详细说明")
