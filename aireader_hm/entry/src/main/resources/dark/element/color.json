@@ -97,6 +97,18 @@
       "value": "#333333"
     },
     {
+      "name": "session_item_selected_text",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "session_item_selected_text_secondary",
+      "value": "#E0E0E0"
+    },
+    {
+      "name": "session_item_selected_text_tertiary",
+      "value": "#C0C0C0"
+    },
+    {
       "name": "white",
       "value": "#FFFFFF"
     },

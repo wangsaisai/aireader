@@ -92,7 +92,7 @@ export struct SessionListComponent {
           Text(params.session.title)
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .fontColor(params.isSelected ? $r('app.color.white') : $r('app.color.primary_text'))
+            .fontColor(params.isSelected ? $r('app.color.session_item_selected_text') : $r('app.color.primary_text'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .width('100%')
@@ -102,7 +102,7 @@ export struct SessionListComponent {
           if (params.session.bookName) {
             Text(params.session.bookName)
               .fontSize(12)
-              .fontColor(params.isSelected ? $r('app.color.white_80') : $r('app.color.session_item_text_secondary'))
+              .fontColor(params.isSelected ? $r('app.color.session_item_selected_text_secondary') : $r('app.color.session_item_text_secondary'))
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
               .width('100%')
@@ -114,13 +114,13 @@ export struct SessionListComponent {
           Row() {
             Text(`${params.session.messages.length} 条消息`)
               .fontSize(11)
-              .fontColor(params.isSelected ? $r('app.color.white_60') :$r('app.color.session_item_text_tertiary'))
+              .fontColor(params.isSelected ? $r('app.color.session_item_selected_text_tertiary') :$r('app.color.session_item_text_tertiary'))
             
             Blank()
             
             Text(this.formatTime(params.session.updatedAt))
               .fontSize(11)
-              .fontColor(params.isSelected ? $r('app.color.white_60') :$r('app.color.session_item_text_tertiary'))
+              .fontColor(params.isSelected ? $r('app.color.session_item_selected_text_tertiary') :$r('app.color.session_item_text_tertiary'))
           }
           .width('100%')
           .margin({ top: 4 })
