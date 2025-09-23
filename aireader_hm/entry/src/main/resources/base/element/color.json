@@ -95,6 +95,18 @@
     {
       "name": "session_item_border_unselected",
       "value": "#dddddd"
+    },
+    {
+      "name": "white",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "white_80",
+      "value": "#CCFFFFFF"
+    },
+    {
+      "name": "white_60",
+      "value": "#99FFFFFF"
     }
   ]
 }

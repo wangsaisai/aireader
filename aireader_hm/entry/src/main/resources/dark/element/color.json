@@ -86,7 +86,7 @@
     },
     {
       "name": "session_item_bg_unselected",
-      "value": "#1c1c1e"
+      "value": "#2c2c2e"
     },
     {
       "name": "session_item_border_selected",
@@ -95,6 +95,18 @@
     {
       "name": "session_item_border_unselected",
       "value": "#333333"
+    },
+    {
+      "name": "white",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "white_80",
+      "value": "#CCFFFFFF"
+    },
+    {
+      "name": "white_60",
+      "value": "#99FFFFFF"
     }
   ]
 }
