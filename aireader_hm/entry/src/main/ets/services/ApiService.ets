@@ -1,7 +1,7 @@
 import http from '@ohos.net.http'
 import { BookInfo, BookInfoData } from '../model/BookInfo'
 import { ChatRequest, ChatMessage as ChatMessageModel } from '../model/ChatModels'
-import { ComplaintData } from '../model/Complaint'
+import { ComplaintData, LikeData } from '../model/Complaint'
 
 export class ApiService {
   private static readonly BASE_URL = 'http://34.176.0.152:8080'
@@ -156,6 +156,31 @@ export class ApiService {
         return true;
       } else {
         throw new Error(result.message || result.error || '提交投诉失败');
+      }
+    } catch (error) {
+      const err = error as Error;
+      throw new Error(err.message || '网络请求或处理失败');
+    }
+  }
+
+  static async submitLike(likeData: LikeData): Promise<boolean> {
+    try {
+      const httpRequest = http.createHttp();
+      const response = await httpRequest.request(
+        `${ApiService.BASE_URL}/api/like`,
+        {
+          method: http.RequestMethod.POST,
+          header: { 'Content-Type': 'application/json' },
+          extraData: likeData
+        }
+      );
+      httpRequest.destroy();
+
+      const result = JSON.parse(response.result as string) as ApiResponse;
+      if (result.success) {
+        return true;
+      } else {
+        throw new Error(result.message || result.error || '点赞失败');
       }
     } catch (error) {
       const err = error as Error;

@@ -47,3 +47,12 @@ class ComplaintCreate(BaseModel):
     session_id: Optional[str] = Field(None, description="会话ID")
     reasons: List[str] = Field(..., description="投诉原因列表")
     details: Optional[str] = Field(None, description="详细说明")
+    book_name: str = Field(..., description="书籍名称")
+    message_content: str = Field(..., description="被投诉的消息内容")
+
+class LikeCreate(BaseModel):
+    """点赞创建请求数据模型"""
+    message_id: str = Field(..., description="被点赞的消息ID")
+    session_id: Optional[str] = Field(None, description="会话ID")
+    book_name: str = Field(..., description="书籍名称")
+    message_content: str = Field(..., description="被点赞的消息内容")

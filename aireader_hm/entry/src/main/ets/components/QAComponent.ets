@@ -3,7 +3,7 @@ import { QAMessage } from '../model/QAMessage'
 @Component
 export struct QAComponent {
   @Prop message: QAMessage
-  public onFeedback?: (messageId: string, feedback: 'like' | 'dislike') => void
+  public onFeedback?: (feedback: 'like' | 'dislike') => void | Promise<void>
 
   build() {
     Row() {
@@ -42,7 +42,7 @@ export struct QAComponent {
                 .fontSize(20)
                 .onClick(() => {
                   if (this.onFeedback) {
-                    this.onFeedback(this.message.id, 'like')
+                    this.onFeedback('like')
                   }
                 })
 
@@ -51,7 +51,7 @@ export struct QAComponent {
                 .margin({ left: 15 })
                 .onClick(() => {
                   if (this.onFeedback) {
-                    this.onFeedback(this.message.id, 'dislike')
+                    this.onFeedback('dislike')
                   }
                 })
             }

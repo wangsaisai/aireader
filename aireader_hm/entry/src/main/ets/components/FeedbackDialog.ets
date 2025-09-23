@@ -5,7 +5,7 @@
     export struct FeedbackDialog {
       controller?: CustomDialogController
       messageId: string = ''
-      onSubmit: (messageId: string, reasons: string[], details: string) => void = () => {}
+      onSubmit: (reasons: string[], details: string) => void | Promise<void> = () => {}
       @State selectedReasons: string[] = []
       @State otherReason: string = ''
       private reasons: string[] = ["内容不准确", "回答不相关", "包含有害信息", "格式有问题"]
@@ -59,7 +59,7 @@
                   promptAction.showToast({ message: '请至少选择一个问题或填写说明' })
                   return
                 }
-                this.onSubmit(this.messageId, this.selectedReasons, this.otherReason)
+                this.onSubmit(this.selectedReasons, this.otherReason)
                 if (this.controller) {
                   this.controller.close()
                 }

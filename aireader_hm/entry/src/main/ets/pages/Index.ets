@@ -12,7 +12,7 @@ import { PromptService } from '../services/PromptService'
 import { PromptSuggestions } from '../components/PromptSuggestions'
 import { FeedbackDialog } from '../components/FeedbackDialog'
 import { promptAction } from '@kit.ArkUI'
-import { ComplaintData } from '../model/Complaint'
+import { ComplaintData, LikeData } from '../model/Complaint'
 
 @Entry
 @Component
@@ -154,34 +154,47 @@ struct Index {
     }
   }
 
-  handleFeedback = (messageId: string, feedback: 'like' | 'dislike') => {
+  handleFeedback = async (message: QAMessage, feedback: 'like' | 'dislike') => {
     if (feedback === 'like') {
-      promptAction.showToast({ message: '感谢您的反馈！' })
+      try {
+        const likeData: LikeData = {
+          message_id: message.id,
+          session_id: this.currentSessionId,
+          book_name: this.bookInfo?.title || '未知书籍',
+          message_content: message.content
+        };
+        await ApiService.submitLike(likeData);
+        promptAction.showToast({ message: '感谢您的反馈！' });
+      } catch (error) {
+        promptAction.showToast({ message: `点赞失败: ${error.message}` });
+      }
     } else {
       this.dialogController = new CustomDialogController({
         builder: FeedbackDialog({
-          messageId: messageId,
-          onSubmit: this.handleSubmitFeedback
+          messageId: message.id,
+          onSubmit: async (reasons: string[], details: string) => { await this.handleSubmitFeedback(message, reasons, details) }
         }),
         autoCancel: true,
         alignment: DialogAlignment.Center
-      })
-      this.dialogController.open()
+      });
+      this.dialogController.open();
     }
   }
 
-  handleSubmitFeedback = async (messageId: string, reasons: string[], details: string) => {
+  handleSubmitFeedback = async (message: QAMessage, reasons: string[], details: string) => {
     try {
       const complaint: ComplaintData = {
-        message_id: messageId,
+        message_id: message.id,
         session_id: this.currentSessionId,
         reasons: reasons,
-        details: details
-      }
-      await ApiService.submitComplaint(complaint)
-      promptAction.showToast({ message: '反馈已提交，感谢！' })
+        details: details,
+        book_name: this.bookInfo?.title || '未知书籍',
+        message_content: message.content
+      };
+      await ApiService.submitComplaint(complaint);
+      promptAction.showToast({ message: '反馈已提交，感谢！' });
     } catch (error) {
-      promptAction.showToast({ message: `提交失败: ${error.message}` })
+      promptAction.showToast({ message: `提交失败: ${error.message}` });
     }
   }
 
@@ -239,7 +252,7 @@ struct Index {
             ForEach(this.messages, (message: QAMessage) => {
               QAComponent({
                 message: message,
-                onFeedback: this.handleFeedback
+                onFeedback: async (feedback: 'like' | 'dislike') => { await this.handleFeedback(message, feedback) }
               })
             }, (item: QAMessage) => item.id)
           }

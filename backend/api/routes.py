@@ -6,7 +6,7 @@ import aiofiles
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
-from api.schemas import BookInfoRequest, QARequest, APIResponse, GenerateReportRequest, ComplaintCreate
+from api.schemas import BookInfoRequest, QARequest, APIResponse, GenerateReportRequest, ComplaintCreate, LikeCreate
 from services.book_service import BookService
 from services.gemini_service import GeminiService
 from services.chat_memory_service import ChatMemoryService
@@ -222,6 +222,8 @@ async def submit_complaint(request: ComplaintCreate):
         complaint_data = {
             "message_id": request.message_id,
             "session_id": request.session_id,
+            "book_name": request.book_name,
+            "message_content": request.message_content,
             "reasons": request.reasons,
             "details": request.details,
             "timestamp": datetime.utcnow().isoformat()
@@ -244,4 +246,35 @@ async def submit_complaint(request: ComplaintCreate):
         return create_error_response(
             error="Internal server error",
             message=f"Failed to submit complaint: {str(e)}"
+        )
+
+
+@router.post("/like", response_model=APIResponse)
+async def submit_like(request: LikeCreate):
+    """接收用户点赞"""
+    try:
+        like_data = {
+            "message_id": request.message_id,
+            "session_id": request.session_id,
+            "book_name": request.book_name,
+            "message_content": request.message_content,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        log_dir = "likes"
+        os.makedirs(log_dir, exist_ok=True)
+        file_path = os.path.join(log_dir, f"like_{request.message_id}.json")
+        
+        async with aiofiles.open(file_path, mode='w', encoding='utf-8') as f:
+            await f.write(json.dumps(like_data, ensure_ascii=False, indent=2))
+            
+        return create_success_response(
+            message="Like submitted successfully"
+        )
+        
+    except Exception as e:
+        log_error(e, "Error submitting like")
+        return create_error_response(
+            error="Internal server error",
+            message=f"Failed to submit like: {str(e)}"
         )
