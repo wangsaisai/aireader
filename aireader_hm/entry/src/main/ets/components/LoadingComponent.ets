@@ -6,7 +6,7 @@ export struct LoadingComponent {
         .width(24)
         .height(24)
       
-      Text('加载中...')
+      Text($r('app.string.loading'))
         .fontSize(14)
         .margin({ left: 8 })
     }

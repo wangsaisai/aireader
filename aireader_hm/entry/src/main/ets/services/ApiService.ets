@@ -23,12 +23,12 @@ export class ApiService {
       if (result.success && result.data) {
         return new BookInfo(result.data as BookInfoData)
       } else {
-        throw new Error(result.message || result.error || '获取书籍信息失败')
+        throw new Error(result.message || result.error || `${$r('app.string.error_get_book_info_failed')}`)
       }
     } catch (error) {
       // Catch all errors, including network and logical ones from the server.
       const err = error as Error
-      throw new Error(err.message || '网络请求或处理失败')
+      throw new Error(err.message || `${$r('app.string.error_network_request_failed')}`)
     }
   }
   
@@ -49,11 +49,11 @@ export class ApiService {
       if (result.success && result.data) {
         return (result.data as QAData).answer
       } else {
-        throw new Error(result.message || result.error || '获取回答失败')
+        throw new Error(result.message || result.error || `${$r('app.string.error_get_answer_failed')}`)
       }
     } catch (error) {
       const err = error as Error
-      throw new Error(err.message || '网络请求或处理失败')
+      throw new Error(err.message || `${$r('app.string.error_network_request_failed')}`)
     }
   }
   
@@ -80,11 +80,11 @@ export class ApiService {
       if (result.success && result.data) {
         return (result.data as QAData).answer
       } else {
-        throw new Error(result.message || result.error || '获取回答失败')
+        throw new Error(result.message || result.error || `${$r('app.string.error_get_answer_failed')}`)
       }
     } catch (error) {
       const err = error as Error
-      throw new Error(err.message || '网络请求或处理失败')
+      throw new Error(err.message || `${$r('app.string.error_network_request_failed')}`)
     }
   }
   static async generateDetailedReport(bookName: string, author: string | undefined): Promise<string> {
@@ -106,11 +106,11 @@ export class ApiService {
       if (result.success && result.data) {
         return (result.data as ReportData).report
       } else {
-        throw new Error(result.message || result.error || '生成详细报告失败')
+        throw new Error(result.message || result.error || `${$r('app.string.error_generate_report_failed')}`)
       }
     } catch (error) {
       const err = error as Error
-      throw new Error(err.message || '网络请求或处理失败')
+      throw new Error(err.message || `${$r('app.string.error_network_request_failed')}`)
     }
   }
 
@@ -130,11 +130,11 @@ export class ApiService {
       if (result.success) {
         return true
       } else {
-        throw new Error(result.message || result.error || '删除会话失败')
+        throw new Error(result.message || result.error || `${$r('app.string.error_delete_session_failed')}`)
       }
     } catch (error) {
       const err = error as Error
-      throw new Error(err.message || '网络请求或处理失败')
+      throw new Error(err.message || `${$r('app.string.error_network_request_failed')}`)
     }
   }
 
@@ -155,11 +155,11 @@ export class ApiService {
       if (result.success) {
         return true;
       } else {
-        throw new Error(result.message || result.error || '提交投诉失败');
+        throw new Error(result.message || result.error || `${$r('app.string.error_submit_complaint_failed')}`);
       }
     } catch (error) {
       const err = error as Error;
-      throw new Error(err.message || '网络请求或处理失败');
+      throw new Error(err.message || `${$r('app.string.error_network_request_failed')}`);
     }
   }
 
@@ -180,11 +180,11 @@ export class ApiService {
       if (result.success) {
         return true;
       } else {
-        throw new Error(result.message || result.error || '点赞失败');
+        throw new Error(result.message || result.error || `${$r('app.string.error_like_failed')}`);
       }
     } catch (error) {
       const err = error as Error;
-      throw new Error(err.message || '网络请求或处理失败');
+      throw new Error(err.message || `${$r('app.string.error_network_request_failed')}`);
     }
   }
 }
@@ -215,15 +215,15 @@ export class ErrorHandler {
     if (errorCode) {
       switch (errorCode) {
         case 401:
-          return 'API认证失败'
+          return `${$r('app.string.error_api_auth_failed')}`
         case 404:
-          return '请求的资源不存在'
+          return `${$r('app.string.error_resource_not_found')}`
         case 500:
-          return '服务器内部错误'
+          return `${$r('app.string.error_server_internal_error')}`
         default:
-          return '网络请求失败'
+          return `${$r('app.string.error_network_request_failed_default')}`
       }
     }
-    return '网络请求失败'
+    return `${$r('app.string.error_network_request_failed_default')}`
   }
 }

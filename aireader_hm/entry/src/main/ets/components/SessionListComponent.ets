@@ -26,12 +26,12 @@ export struct SessionListComponent {
     Column() {
       // 顶部标题和新建按钮
       Row() {
-        Text('对话历史')
+        Text($r('app.string.chat_history'))
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .layoutWeight(1)
         
-        Button('新建会话')
+        Button($r('app.string.new_session'))
           .fontSize(14)
           .height(32)
           .onClick(() => {
@@ -48,7 +48,7 @@ export struct SessionListComponent {
         LoadingComponent()
           .margin({ top: 20 })
       } else if (this.sessions.length === 0) {
-        Text('暂无会话')
+        Text($r('app.string.no_sessions'))
           .fontSize(14)
           .fontColor($r('app.color.secondary_text'))
           .textAlign(TextAlign.Center)
@@ -112,7 +112,7 @@ export struct SessionListComponent {
           
           // 消息数量和时间
           Row() {
-            Text(`${params.session.messages.length} 条消息`)
+            Text($r('app.string.message_count', params.session.messages.length))
               .fontSize(11)
               .fontColor(params.isSelected ? $r('app.color.session_item_selected_text_tertiary') :$r('app.color.session_item_text_tertiary'))
             
@@ -129,7 +129,7 @@ export struct SessionListComponent {
         .alignItems(HorizontalAlign.Start)
         
         // 删除按钮
-        Button('删除')
+        Button($r('app.string.delete'))
           .fontSize(12)
           .height(24)
           .width(48)
@@ -164,19 +164,27 @@ export struct SessionListComponent {
       
       // 一天内显示时间
       if (diff < 24 * 60 * 60 * 1000) {
-        return time.toLocaleTimeString('zh-CN', { 
+        return time.toLocaleTimeString([], { 
           hour: '2-digit', 
           minute: '2-digit' 
         })
       }
       // 一周内显示星期
       else if (diff < 7 * 24 * 60 * 60 * 1000) {
-        const days = ['日', '一', '二', '三', '四', '五', '六']
-        return `星期${days[time.getDay()]}`
+        const weekdays = [
+          $r('app.string.weekdays_sun'),
+          $r('app.string.weekdays_mon'),
+          $r('app.string.weekdays_tue'),
+          $r('app.string.weekdays_wed'),
+          $r('app.string.weekdays_thu'),
+          $r('app.string.weekdays_fri'),
+          $r('app.string.weekdays_sat')
+        ];
+        return `${$r('app.string.weekday', `${weekdays[time.getDay()]}`)}`;
       }
       // 更早显示日期
       else {
-        return time.toLocaleDateString('zh-CN', {
+        return time.toLocaleDateString([], {
           month: '2-digit',
           day: '2-digit'
         })

@@ -6,43 +6,43 @@ export struct BookInfoComponent {
   
   build() {
     Column() {
-      Text('书籍信息')
+      Text($r('app.string.book_info'))
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .margin({ bottom: 15 })
       
       if (this.bookInfo.title) {
-        Text(`书名: ${this.bookInfo.title}`)
+        Text(`${$r('app.string.book_title')}: ${this.bookInfo.title}`)
           .fontSize(16)
           .margin({ bottom: 8 })
       }
       
       if (this.bookInfo.author) {
-        Text(`作者: ${this.bookInfo.author}`)
+        Text(`${$r('app.string.book_author')}: ${this.bookInfo.author}`)
           .fontSize(16)
           .margin({ bottom: 8 })
       }
       
       if (this.bookInfo.publisher) {
-        Text(`出版社: ${this.bookInfo.publisher}`)
+        Text(`${$r('app.string.book_publisher')}: ${this.bookInfo.publisher}`)
           .fontSize(16)
           .margin({ bottom: 8 })
       }
       
       if (this.bookInfo.year) {
-        Text(`出版年份: ${this.bookInfo.year}`)
+        Text(`${$r('app.string.book_year')}: ${this.bookInfo.year}`)
           .fontSize(16)
           .margin({ bottom: 8 })
       }
       
       if (this.bookInfo.isbn) {
-        Text(`ISBN: ${this.bookInfo.isbn}`)
+        Text(`${$r('app.string.book_isbn')}: ${this.bookInfo.isbn}`)
           .fontSize(16)
           .margin({ bottom: 8 })
       }
       
       if (this.bookInfo.description) {
-        Text('简介:')
+        Text(`${$r('app.string.book_description')}:`)
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
           .margin({ top: 15, bottom: 8 })
@@ -54,7 +54,7 @@ export struct BookInfoComponent {
       }
       
       if (this.bookInfo.summary) {
-        Text('内容概述:')
+        Text(`${$r('app.string.book_summary')}:`)
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
           .margin({ top: 15, bottom: 8 })

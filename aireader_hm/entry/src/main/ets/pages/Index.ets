@@ -61,7 +61,7 @@ struct Index {
   }
 
   async createNewSession(title?: string, bookName?: string) {
-    const sessionTitle = title || '新对话'
+    const sessionTitle = title || `${$r('app.string.new_chat')}`
     const session = await this.sessionManager.createSession(sessionTitle, bookName)
     this.updateSessionsFromManager()
     this.loadCurrentSession()
@@ -110,11 +110,11 @@ struct Index {
         if (fullBookInfo.is_found) {
           this.bookInfo = fullBookInfo
           await this.sessionManager.updateCurrentSessionBookInfo(this.bookInfo.title, this.bookInfo)
-          const bookInfoText = `📚 《${this.bookInfo.title}》\n\n` +
-            `作者：${this.bookInfo.author || '未知'}\n` +
-            `出版社：${this.bookInfo.publisher || '未知'}\n` +
-            `出版年份：${this.bookInfo.year || '未知'}\n\n` +
-            `简介：\n${this.bookInfo.description || '暂无简介'}`
+          const bookInfoText = `${$r('app.string.book_info_title', this.bookInfo.title)}\n\n` +
+            `${$r('app.string.author')}：${this.bookInfo.author || `${$r('app.string.unknown')}`}\n` +
+            `${$r('app.string.publisher')}：${this.bookInfo.publisher || `${$r('app.string.unknown')}`}\n` +
+            `${$r('app.string.publication_year')}：${this.bookInfo.year || `${$r('app.string.unknown')}`}\n\n` +
+            `${$r('app.string.description')}：\n${this.bookInfo.description || `${$r('app.string.no_description')}`}`
           const bookInfoMessage = new QAMessage(bookInfoText, 'answer')
           await this.sessionManager.addMessageToCurrentSession(bookInfoMessage)
         } else {
@@ -160,13 +160,13 @@ struct Index {
         const likeData: LikeData = {
           message_id: message.id,
           session_id: this.currentSessionId,
-          book_name: this.bookInfo?.title || '未知书籍',
+          book_name: this.bookInfo?.title || `${$r('app.string.unknown_book')}`,
           message_content: message.content
         };
         await ApiService.submitLike(likeData);
-        promptAction.showToast({ message: '感谢您的反馈！' });
+        promptAction.showToast({ message: `${$r('app.string.feedback_thanks')}` });
       } catch (error) {
-        promptAction.showToast({ message: `点赞失败: ${error.message}` });
+        promptAction.showToast({ message: `${$r('app.string.like_failed', error.message)}` });
       }
     } else {
       this.dialogController = new CustomDialogController({
@@ -188,13 +188,13 @@ struct Index {
         session_id: this.currentSessionId,
         reasons: reasons,
         details: details,
-        book_name: this.bookInfo?.title || '未知书籍',
+        book_name: this.bookInfo?.title || `${$r('app.string.unknown_book')}`,
         message_content: message.content
       };
       await ApiService.submitComplaint(complaint);
-      promptAction.showToast({ message: '反馈已提交，感谢！' });
+      promptAction.showToast({ message: `${$r('app.string.feedback_submitted_thanks')}` });
     } catch (error) {
-      promptAction.showToast({ message: `提交失败: ${error.message}` });
+      promptAction.showToast({ message: `${$r('app.string.submit_failed', error.message)}` });
     }
   }
 
@@ -213,7 +213,7 @@ struct Index {
           .onClick(() => {
             this.showSessionList = !this.showSessionList
           })
-          Text('AI读书助手')
+          Text($r('app.string.app_name'))
             .fontSize(20)
             .fontWeight(FontWeight.Bold)
             .layoutWeight(1)
@@ -277,7 +277,7 @@ struct Index {
         }
         Row() {
           TextInput({
-            placeholder: this.bookInfo ? '请输入关于这本书的问题' : '请输入书籍名称开始对话',
+            placeholder: this.bookInfo ? $r('app.string.placeholder_question') : $r('app.string.placeholder_book_name'),
             controller: this.textInputController,
             text: this.currentInput
           })
@@ -288,7 +288,7 @@ struct Index {
             .onChange((value: string) => {
               this.currentInput = value
             })
-          Button('发送')
+          Button($r('app.string.send'))
             .width(80)
             .height(40)
             .enabled(!this.isLoading && this.currentInput.trim().length > 0)
@@ -314,16 +314,16 @@ struct Index {
               },
               onSessionDelete: (sessionId: string) => {
                 AlertDialog.show({
-                  title: '确认删除',
-                  message: '您确定要删除这个会话吗？此操作无法撤销。',
+                  title: `${$r('app.string.confirm_delete_title')}`,
+                  message: `${$r('app.string.confirm_delete_message')}`,
                   primaryButton: {
-                    value: '取消',
+                    value: `${$r('app.string.cancel')}`,
                     action: () => {
                       console.info('取消删除')
                     }
                   },
                   secondaryButton: {
-                    value: '删除',
+                    value: `${$r('app.string.delete')}`,
                     fontColor: Color.Red,
                     action: () => {
                       this.deleteSession(sessionId)
@@ -362,17 +362,17 @@ struct Index {
 
   private getCurrentSessionTitle(): string {
     if (!this.currentSessionId) {
-      return '新对话'
+      return `${$r('app.string.new_chat')}`
     }
     const session = this.sessions.find(s => s.id === this.currentSessionId)
-    return session ? session.title : '未知会话'
+    return session ? session.title : `${$r('app.string.unknown_session')}`
   }
 
   async handleSuggestionClick(suggestion: PromptSuggestion) {
     if (suggestion.id === '7') {
       await this.generateDetailedReport();
     } else {
-      this.currentInput = suggestion.prompt;
+      this.currentInput = `${suggestion.prompt}`;
       await this.processMessage();
     }
   }
@@ -384,10 +384,10 @@ struct Index {
     this.showPromptSuggestions = false;
     const bookTitle = this.bookInfo.title;
     const bookAuthor = this.bookInfo.author;
-    const userMessage = new QAMessage(`正在为《${bookTitle}》生成详细报告...`, 'question');
+    const userMessage = new QAMessage(`${$r('app.string.generating_report_for', bookTitle)}`, 'question');
     await this.sessionManager.addMessageToCurrentSession(userMessage);
     this.loadCurrentSession();
-    const systemMessage = new QAMessage("报告生成中，这可能需要几分钟时间，请耐心等待...", 'answer');
+    const systemMessage = new QAMessage(`${$r('app.string.report_generating_wait')}`, 'answer');
     await this.sessionManager.addMessageToCurrentSession(systemMessage);
     this.loadCurrentSession();
     this.isLoading = true;
@@ -397,7 +397,7 @@ struct Index {
       await this.sessionManager.addMessageToCurrentSession(reportMessage);
       this.loadCurrentSession();
     } catch (error) {
-      const errorMessage = new QAMessage(`生成报告失败：${error.message}`, 'answer');
+      const errorMessage = new QAMessage(`${$r('app.string.report_generation_failed', error.message)}`, 'answer');
       await this.sessionManager.addMessageToCurrentSession(errorMessage);
       this.loadCurrentSession();
     } finally {

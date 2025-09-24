@@ -9,7 +9,7 @@ export struct PromptSuggestions {
 
   build() {
     Column() {
-      Text('您可以尝试以下问题：')
+      Text($r('app.string.try_these_questions'))
         .fontSize(14)
         .fontColor($r('app.color.suggestion_text'))
         .margin({ bottom: 8 })

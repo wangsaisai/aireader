@@ -88,7 +88,7 @@ export class ClientSessionManager {
       }
     } catch (error) {
       console.error('加载会话失败:', error)
-      await this.createSession('新对话')
+      await this.createSession(`${$r('app.string.new_session_title')}`)
     }
   }
   
@@ -168,7 +168,7 @@ export class ClientSessionManager {
         if (this.sessions.length > 0) {
           this.currentSessionId = this.sessions[0].id
         } else {
-          await this.createSession('新对话')
+          await this.createSession(`${$r('app.string.new_session_title')}`)
         }
       }
       
@@ -228,7 +228,7 @@ export class ClientSessionManager {
       currentSession.bookInfo = undefined
       // Optionally reset title if it was based on the book name
       if (currentSession.title.startsWith('📚')) {
-        currentSession.title = '新对话'
+        currentSession.title = `${$r('app.string.new_session_title')}`
       }
       currentSession.updatedAt = new Date()
       await this.saveSessions()
@@ -262,7 +262,7 @@ export class ClientSessionManager {
   // 检查是否需要创建默认会话
   async ensureDefaultSession(): Promise<void> {
     if (this.sessions.length === 0) {
-      await this.createSession('新对话')
+      await this.createSession(`${$r('app.string.new_session_title')}`)
     }
   }
   

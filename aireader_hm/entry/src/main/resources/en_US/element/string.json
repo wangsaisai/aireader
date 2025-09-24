@@ -10,319 +10,319 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "AI读书"
+      "value": "AI Reader"
     },
     {
       "name": "app_name",
-      "value": "AI读书助手"
+      "value": "AI Book Assistant"
     },
     {
       "name": "new_chat",
-      "value": "新对话"
+      "value": "New Chat"
     },
     {
       "name": "unknown_book",
-      "value": "未知书籍"
+      "value": "Unknown Book"
     },
     {
       "name": "feedback_thanks",
-      "value": "感谢您的反馈！"
+      "value": "Thank you for your feedback!"
     },
     {
       "name": "like_failed",
-      "value": "点赞失败: %s"
+      "value": "Like failed: %s"
     },
     {
       "name": "feedback_submitted_thanks",
-      "value": "反馈已提交，感谢！"
+      "value": "Feedback submitted, thank you!"
     },
     {
       "name": "submit_failed",
-      "value": "提交失败: %s"
+      "value": "Submission failed: %s"
     },
     {
       "name": "placeholder_question",
-      "value": "请输入关于这本书的问题"
+      "value": "Please enter a question about this book"
     },
     {
       "name": "placeholder_book_name",
-      "value": "请输入书籍名称开始对话"
+      "value": "Please enter a book title to start the conversation"
     },
     {
       "name": "send",
-      "value": "发送"
+      "value": "Send"
     },
     {
       "name": "confirm_delete_title",
-      "value": "确认删除"
+      "value": "Confirm Deletion"
     },
     {
       "name": "confirm_delete_message",
-      "value": "您确定要删除这个会话吗？此操作无法撤销。"
+      "value": "Are you sure you want to delete this session? This action cannot be undone."
     },
     {
       "name": "cancel",
-      "value": "取消"
+      "value": "Cancel"
     },
     {
       "name": "delete",
-      "value": "删除"
+      "value": "Delete"
     },
     {
       "name": "unknown_session",
-      "value": "未知会话"
+      "value": "Unknown Session"
     },
     {
       "name": "generating_report_for",
-      "value": "正在为《%s》生成详细报告..."
+      "value": "Generating detailed report for \"%s\"..."
     },
     {
       "name": "report_generating_wait",
-      "value": "报告生成中，这可能需要几分钟时间，请耐心等待..."
+      "value": "The report is being generated, which may take a few minutes. Please wait..."
     },
     {
       "name": "report_generation_failed",
-      "value": "生成报告失败：%s"
+      "value": "Failed to generate report: %s"
     },
     {
       "name": "author",
-      "value": "作者"
+      "value": "Author"
     },
     {
       "name": "unknown",
-      "value": "未知"
+      "value": "Unknown"
     },
     {
       "name": "publisher",
-      "value": "出版社"
+      "value": "Publisher"
     },
     {
       "name": "publication_year",
-      "value": "出版年份"
+      "value": "Publication Year"
     },
     {
       "name": "description",
-      "value": "简介"
+      "value": "Description"
     },
     {
       "name": "no_description",
-      "value": "暂无简介"
+      "value": "No description available"
     },
     {
       "name": "book_info_title",
-      "value": "📚 《%s》"
+      "value": "📚 \"%s\""
     },
     {
       "name": "chat_history",
-      "value": "对话历史"
+      "value": "Chat History"
     },
     {
       "name": "new_session",
-      "value": "新建会话"
+      "value": "New Session"
     },
     {
       "name": "no_sessions",
-      "value": "暂无会话"
+      "value": "No Sessions"
     },
     {
       "name": "message_count",
-      "value": "%d 条消息"
+      "value": "%d messages"
     },
     {
       "name": "weekday",
-      "value": "星期%s"
+      "value": "Weekday %s"
     },
     {
       "name": "weekdays_sun",
-      "value": "日"
+      "value": "Sun"
     },
     {
       "name": "weekdays_mon",
-      "value": "一"
+      "value": "Mon"
     },
     {
       "name": "weekdays_tue",
-      "value": "二"
+      "value": "Tue"
     },
     {
       "name": "weekdays_wed",
-      "value": "三"
+      "value": "Wed"
     },
     {
       "name": "weekdays_thu",
-      "value": "四"
+      "value": "Thu"
     },
     {
       "name": "weekdays_fri",
-      "value": "五"
+      "value": "Fri"
     },
     {
       "name": "weekdays_sat",
-      "value": "六"
+      "value": "Sat"
     },
     {
       "name": "loading",
-      "value": "加载中..."
+      "value": "Loading..."
     },
     {
       "name": "feedback_title",
-      "value": "问题反馈"
+      "value": "Feedback"
     },
     {
       "name": "feedback_reason_inaccurate",
-      "value": "内容不准确"
+      "value": "Inaccurate content"
     },
     {
       "name": "feedback_reason_irrelevant",
-      "value": "回答不相关"
+      "value": "Irrelevant answer"
     },
     {
       "name": "feedback_reason_harmful",
-      "value": "包含有害信息"
+      "value": "Contains harmful information"
     },
     {
       "name": "feedback_reason_format",
-      "value": "格式有问题"
+      "value": "Formatting issues"
     },
     {
       "name": "feedback_other_placeholder",
-      "value": "请输入其他问题（可选）"
+      "value": "Please enter other issues (optional)"
     },
     {
       "name": "submit",
-      "value": "提交"
+      "value": "Submit"
     },
     {
       "name": "feedback_prompt",
-      "value": "请至少选择一个问题或填写说明"
+      "value": "Please select at least one issue or provide details"
     },
     {
       "name": "prompt_title_core_insights",
-      "value": "核心洞见与主要观点"
+      "value": "Core Insights & Main Arguments"
     },
     {
       "name": "prompt_prompt_core_insights",
-      "value": "请深入分析并提炼这本书最核心、最具原创性的深刻洞见和关键论断。"
+      "value": "Please deeply analyze and extract the most core, original, and profound insights and key arguments from this book."
     },
     {
       "name": "prompt_title_key_concepts",
-      "value": "关键概念与理论框架"
+      "value": "Key Concepts & Theoretical Frameworks"
     },
     {
       "name": "prompt_prompt_key_concepts",
-      "value": "请识别并透彻解释书中反复出现的关键概念、术语或理论模型。"
+      "value": "Please identify and thoroughly explain the key concepts, terms, or theoretical models that appear repeatedly in the book."
     },
     {
       "name": "prompt_title_quotes",
-      "value": "名言警句/精彩摘录"
+      "value": "Famous Quotes / Memorable Excerpts"
     },
     {
       "name": "prompt_prompt_quotes",
-      "value": "请精选书中能体现核心思想、语言精辟、发人深省的名言警句或经典段落。"
+      "value": "Please select famous quotes or classic paragraphs from the book that reflect its core ideas, are eloquently worded, and are thought-provoking."
     },
     {
       "name": "prompt_title_reviews",
-      "value": "评价、争议与影响"
+      "value": "Reviews, Controversies & Impact"
     },
     {
       "name": "prompt_prompt_reviews",
-      "value": "请总结本书在学术界、评论界的主流评价（包含赞誉和批评），并分析其深远影响。"
+      "value": "Please summarize the mainstream reviews of this book in academia and among critics (including praise and criticism), and analyze its profound impact."
     },
     {
       "name": "prompt_title_reading_strategies",
-      "value": "阅读策略与建议"
+      "value": "Reading Strategies & Suggestions"
     },
     {
       "name": "prompt_prompt_reading_strategies",
-      "value": "请为渴望深度理解本书的读者提供具体的阅读方法建议和辅助阅读材料。"
+      "value": "Please provide specific reading method suggestions and supplementary reading materials for readers who wish to deeply understand this book."
     },
     {
       "name": "prompt_title_target_audience",
-      "value": "目标读者与同类书比较"
+      "value": "Target Audience & Comparison with Similar Books"
     },
     {
       "name": "prompt_prompt_target_audience",
-      "value": "请描绘本书最适合的读者群体，并与同类书籍进行对比分析，突出其独特性。"
+      "value": "Please describe the most suitable reader group for this book, and compare it with similar books to highlight its uniqueness."
     },
     {
       "name": "prompt_title_generate_report",
-      "value": "生成详细书籍报告"
+      "value": "Generate Detailed Book Report"
     },
     {
       "name": "prompt_prompt_generate_report",
-      "value": "生成一份关于这本书的详细报告。"
+      "value": "Generate a detailed report on this book."
     },
     {
       "name": "try_these_questions",
-      "value": "您可以尝试以下问题："
+      "value": "You can try the following questions:"
     },
     {
       "name": "new_session_title",
-      "value": "新对话"
+      "value": "New Chat"
     },
     {
       "name": "error_get_book_info_failed",
-      "value": "获取书籍信息失败"
+      "value": "Failed to get book information"
     },
     {
       "name": "error_network_request_failed",
-      "value": "网络请求或处理失败"
+      "value": "Network request or processing failed"
     },
     {
       "name": "error_get_answer_failed",
-      "value": "获取回答失败"
+      "value": "Failed to get answer"
     },
     {
       "name": "error_generate_report_failed",
-      "value": "生成详细报告失败"
+      "value": "Failed to generate detailed report"
     },
     {
       "name": "error_delete_session_failed",
-      "value": "删除会话失败"
+      "value": "Failed to delete session"
     },
     {
       "name": "error_submit_complaint_failed",
-      "value": "提交投诉失败"
+      "value": "Failed to submit complaint"
     },
     {
       "name": "error_like_failed",
-      "value": "点赞失败"
+      "value": "Failed to like"
     },
     {
       "name": "error_api_auth_failed",
-      "value": "API认证失败"
+      "value": "API authentication failed"
     },
     {
       "name": "error_resource_not_found",
-      "value": "请求的资源不存在"
+      "value": "The requested resource does not exist"
     },
     {
       "name": "error_server_internal_error",
-      "value": "服务器内部错误"
+      "value": "Server internal error"
     },
     {
       "name": "error_network_request_failed_default",
-      "value": "网络请求失败"
+      "value": "Network request failed"
     },
     {
       "name": "book_info",
-      "value": "书籍信息"
+      "value": "Book Information"
     },
     {
       "name": "book_title",
-      "value": "书名"
+      "value": "Title"
     },
     {
       "name": "book_author",
-      "value": "作者"
+      "value": "Author"
     },
     {
       "name": "book_publisher",
-      "value": "出版社"
+      "value": "Publisher"
     },
     {
       "name": "book_year",
-      "value": "出版年份"
+      "value": "Year"
     },
     {
       "name": "book_isbn",
@@ -330,11 +330,11 @@
     },
     {
       "name": "book_description",
-      "value": "简介"
+      "value": "Description"
     },
     {
       "name": "book_summary",
-      "value": "内容概述"
+      "value": "Summary"
     }
   ]
 }
