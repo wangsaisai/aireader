@@ -35,8 +35,11 @@ struct Index {
 
   async aboutToAppear() {
     try {
+      const context = getContext(this);
+      await this.sessionManager.init(context);
       await this.sessionManager.ensureInitialized()
-      await this.sessionManager.ensureDefaultSession()
+      const defaultSessionTitle = await context.resourceManager.getStringValue($r('app.string.new_session_title'));
+      await this.sessionManager.ensureDefaultSession(defaultSessionTitle)
       this.updateSessionsFromManager()
       this.loadCurrentSession()
     } catch (error) {
@@ -88,7 +91,8 @@ struct Index {
   }
 
   async deleteSession(sessionId: string) {
-    await this.sessionManager.deleteSession(sessionId)
+    const defaultTitle = await getContext(this).resourceManager.getStringValue($r('app.string.new_session_title'));
+    await this.sessionManager.deleteSession(sessionId, defaultTitle)
     this.updateSessionsFromManager()
     this.loadCurrentSession()
   }
@@ -119,7 +123,8 @@ struct Index {
           await this.sessionManager.addMessageToCurrentSession(bookInfoMessage)
         } else {
           this.bookInfo = null
-          await this.sessionManager.clearCurrentSessionBookInfo()
+          const defaultTitle = await getContext(this).resourceManager.getStringValue($r('app.string.new_session_title'));
+          await this.sessionManager.clearCurrentSessionBookInfo(defaultTitle)
           const notFoundMessage = new QAMessage(fullBookInfo.not_found_reason, 'answer')
           await this.sessionManager.addMessageToCurrentSession(notFoundMessage)
         }
@@ -138,7 +143,8 @@ struct Index {
     } catch (error) {
       const errorMessage = new QAMessage(error.message, 'answer')
       this.bookInfo = null
-      await this.sessionManager.clearCurrentSessionBookInfo()
+      const defaultTitle = await getContext(this).resourceManager.getStringValue($r('app.string.new_session_title'));
+      await this.sessionManager.clearCurrentSessionBookInfo(defaultTitle)
       await this.sessionManager.addMessageToCurrentSession(errorMessage)
       this.loadCurrentSession()
     } finally {
@@ -372,7 +378,8 @@ struct Index {
     if (suggestion.id === '7') {
       await this.generateDetailedReport();
     } else {
-      this.currentInput = `${suggestion.prompt}`;
+      const promptText = await getContext(this).resourceManager.getStringValue(suggestion.prompt);
+      this.currentInput = promptText;
       await this.processMessage();
     }
   }

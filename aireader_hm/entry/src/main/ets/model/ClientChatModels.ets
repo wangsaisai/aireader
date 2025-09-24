@@ -1,11 +1,12 @@
 import { QAMessage } from './QAMessage'
 import { ChatMessage } from './ChatModels'
+import { BookInfo } from './BookInfo'
 
 export interface ClientChatSession {
   id: string
   title: string
   bookName?: string
-  bookInfo?: Object
+  bookInfo?: BookInfo
   messages: QAMessage[]
   createdAt: Date
   updatedAt: Date

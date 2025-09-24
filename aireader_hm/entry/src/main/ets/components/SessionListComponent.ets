@@ -18,10 +18,6 @@ export struct SessionListComponent {
   private onSessionDelete?: (sessionId: string) => void
   private onNewSession?: () => void
   
-  aboutToAppear() {
-    // 可以在这里设置回调函数
-  }
-  
   build() {
     Column() {
       // 顶部标题和新建按钮
@@ -161,28 +157,19 @@ export struct SessionListComponent {
     try {
       const now = new Date()
       const diff = now.getTime() - time.getTime()
-      
-      // 一天内显示时间
+
+      // Less than a day: show time
       if (diff < 24 * 60 * 60 * 1000) {
-        return time.toLocaleTimeString([], { 
-          hour: '2-digit', 
-          minute: '2-digit' 
+        return time.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit'
         })
       }
-      // 一周内显示星期
+      // Less than a week: show weekday
       else if (diff < 7 * 24 * 60 * 60 * 1000) {
-        const weekdays = [
-          $r('app.string.weekdays_sun'),
-          $r('app.string.weekdays_mon'),
-          $r('app.string.weekdays_tue'),
-          $r('app.string.weekdays_wed'),
-          $r('app.string.weekdays_thu'),
-          $r('app.string.weekdays_fri'),
-          $r('app.string.weekdays_sat')
-        ];
-        return `${$r('app.string.weekday', `${weekdays[time.getDay()]}`)}`;
+        return time.toLocaleDateString([], { weekday: 'short' });
       }
-      // 更早显示日期
+      // Older: show date
       else {
         return time.toLocaleDateString([], {
           month: '2-digit',

@@ -1,196 +1,142 @@
-import dataPreferences from '@ohos.data.preferences'
-import { ClientChatSession } from '../model/ClientChatModels'
-import { QAMessage } from '../model/QAMessage'
-import { BookInfo } from '../model/BookInfo'
+// 引入鸿蒙依赖
+import preferences from '@ohos.data.preferences';
 
-// 定义序列化会话数据的接口
+// 引入项目内模块
+import { ClientChatSession } from '../model/ClientChatModels';
+import { QAMessage } from '../model/QAMessage';
+import { BookInfo } from '../model/BookInfo';
+
+// 定义用于序列化的数据接口
 interface SerializedSession {
-  id: string
-  title: string
-  bookName?: string
-  bookInfo?: Object
-  messages: SerializedMessage[]
-  createdAt: string
-  updatedAt: string
-  isActive: boolean
+  id: string;
+  title: string;
+  bookName?: string;
+  bookInfo?: BookInfo;
+  messages: QAMessage[];
+  createdAt: string; // 使用ISO 8601字符串格式
+  updatedAt: string; // 使用ISO 8601字符串格式
+  isActive: boolean;
 }
 
-interface SerializedMessage {
-  content: string
-  type: 'question' | 'answer'
-  timestamp?: string
-}
-
+// 单例数据存储管理器
 export class StorageManager {
-  private static instance: StorageManager
-  private dataStore: dataPreferences.Preferences | null = null
-  private readonly STORE_NAME = 'chat_sessions_store'
-  private readonly SESSIONS_KEY = 'chat_sessions'
-  private readonly CURRENT_SESSION_KEY = 'current_session_id'
-  
+  private static instance: StorageManager;
+  private pref: preferences.Preferences | null = null;
+  private readonly PREF_NAME = 'gemini_chat_preferences';
+
   private constructor() {}
-  
+
   static getInstance(): StorageManager {
     if (!StorageManager.instance) {
-      StorageManager.instance = new StorageManager()
+      StorageManager.instance = new StorageManager();
     }
-    return StorageManager.instance
+    return StorageManager.instance;
   }
-  
-  async init(context: Context) {
+
+  // 初始化
+  async init(context: Context): Promise<boolean> {
     try {
-      this.dataStore = await dataPreferences.getPreferences(context, this.STORE_NAME)
-      console.log('StorageManager initialized successfully')
-    } catch (error) {
-      console.error('Failed to initialize StorageManager:', error)
+      this.pref = await preferences.getPreferences(context, this.PREF_NAME);
+      console.info('StorageManager initialized successfully');
+      return true;
+    } catch (e) {
+      console.error('StorageManager failed to initialize:', e);
+      return false;
     }
   }
-  
-  private ensureInitialized(): boolean {
-    if (!this.dataStore) {
-      console.error('StorageManager not initialized')
-      return false
+
+  // 检查是否初始化
+  private isInitialized(): boolean {
+    if (!this.pref) {
+      console.error('StorageManager not initialized');
+      return false;
     }
-    return true
+    return true;
   }
-  
-  // 保存会话列表
+
+  // 保存会话
   async saveSessions(sessions: ClientChatSession[]): Promise<boolean> {
-    if (!this.ensureInitialized()) return false
-    
+    if (!this.isInitialized()) return false;
     try {
-      // 序列化会话数据
-      const serializedSessions: SerializedSession[] = sessions.map(session => {
+      const serializedSessions: SerializedSession[] = sessions.map((session: ClientChatSession): SerializedSession => {
         const serializedSession: SerializedSession = {
           id: session.id,
           title: session.title,
           bookName: session.bookName,
           bookInfo: session.bookInfo,
-          messages: session.messages.map(msg => {
-            const serializedMsg: SerializedMessage = {
-              content: msg.content,
-              type: msg.type,
-              timestamp: msg.timestamp ? msg.timestamp.toString() : undefined
-            }
-            return serializedMsg
+          messages: session.messages.map((msg: QAMessage) => {
+            const newMsg = new QAMessage(msg.content, msg.type);
+            newMsg.id = msg.id;
+            newMsg.timestamp = msg.timestamp;
+            return newMsg;
           }),
-          createdAt: session.createdAt.getTime().toString(),
-          updatedAt: session.updatedAt.getTime().toString(),
-          isActive: session.isActive
-        }
-        return serializedSession
-      })
-      
-      await this.dataStore!.put(this.SESSIONS_KEY, JSON.stringify(serializedSessions))
-      await this.dataStore!.flush()
-      console.log('Sessions saved successfully')
-      return true
-    } catch (error) {
-      console.error('Failed to save sessions:', error)
-      return false
+          createdAt: session.createdAt.toISOString(),
+          updatedAt: session.updatedAt.toISOString(),
+          isActive: session.isActive,
+        };
+        return serializedSession;
+      });
+      await this.pref!.put('chatSessions', JSON.stringify(serializedSessions));
+      await this.pref!.flush();
+      return true;
+    } catch (e) {
+      console.error('Failed to save sessions:', e);
+      return false;
     }
   }
-  
-  // 加载会话列表
+
+  // 加载会话
   async loadSessions(): Promise<ClientChatSession[]> {
-    if (!this.ensureInitialized()) return []
-    
+    if (!this.isInitialized()) return [];
     try {
-      const sessionsData = await this.dataStore!.get(this.SESSIONS_KEY, '[]')
-      const serializedSessions: SerializedSession[] = JSON.parse(sessionsData as string)
-      
+      const sessionsData = await this.pref!.get('chatSessions', '[]');
+      const serializedSessions: SerializedSession[] = JSON.parse(sessionsData as string);
+
       if (!Array.isArray(serializedSessions)) {
-        console.warn('Invalid sessions data format')
-        return []
+        return [];
       }
-      
-      // 反序列化会话数据
-      const sessions: ClientChatSession[] = serializedSessions.map((sessionData: SerializedSession) => {
-        const messages = (sessionData.messages || []).map((msg: SerializedMessage) => {
-          const qaMessage = new QAMessage(msg.content, msg.type)
-          if (msg.timestamp) {
-            qaMessage.timestamp = parseInt(msg.timestamp)
-          }
-          return qaMessage
-        })
-        
+
+      return serializedSessions.map((s: SerializedSession): ClientChatSession => {
         const session: ClientChatSession = {
-          id: sessionData.id,
-          title: sessionData.title,
-          bookName: sessionData.bookName,
-          bookInfo: sessionData.bookInfo,
-          messages: messages,
-          createdAt: new Date(parseInt(sessionData.createdAt)),
-          updatedAt: new Date(parseInt(sessionData.updatedAt)),
-          isActive: sessionData.isActive
-        }
-        return session
-      })
-      
-      console.log(`Loaded ${sessions.length} sessions`)
-      return sessions
-    } catch (error) {
-      console.error('Failed to load sessions:', error)
-      return []
+          id: s.id,
+          title: s.title,
+          bookName: s.bookName,
+          bookInfo: s.bookInfo,
+          messages: s.messages,
+          createdAt: new Date(s.createdAt),
+          updatedAt: new Date(s.updatedAt),
+          isActive: s.isActive,
+        };
+        return session;
+      });
+    } catch (e) {
+      console.error('Failed to load sessions:', e);
+      return [];
     }
   }
-  
+
   // 保存当前会话ID
-  async saveCurrentSessionId(sessionId: string): Promise<boolean> {
-    if (!this.ensureInitialized()) return false
-    
+  async saveCurrentSessionId(id: string): Promise<boolean> {
+    if (!this.isInitialized()) return false;
     try {
-      await this.dataStore!.put(this.CURRENT_SESSION_KEY, sessionId)
-      await this.dataStore!.flush()
-      console.log('Current session ID saved successfully')
-      return true
-    } catch (error) {
-      console.error('Failed to save current session ID:', error)
-      return false
+      await this.pref!.put('currentSessionId', id);
+      await this.pref!.flush();
+      return true;
+    } catch (e) {
+      console.error('Failed to save current session ID:', e);
+      return false;
     }
   }
-  
+
   // 加载当前会话ID
   async loadCurrentSessionId(): Promise<string> {
-    if (!this.ensureInitialized()) return ''
-    
+    if (!this.isInitialized()) return '';
     try {
-      const sessionId = await this.dataStore!.get(this.CURRENT_SESSION_KEY, '')
-      console.log('Current session ID loaded:', sessionId)
-      return sessionId as string
-    } catch (error) {
-      console.error('Failed to load current session ID:', error)
-      return ''
-    }
-  }
-  
-  // 清除所有数据
-  async clearAllData(): Promise<boolean> {
-    if (!this.ensureInitialized()) return false
-    
-    try {
-      await this.dataStore!.delete(this.SESSIONS_KEY)
-      await this.dataStore!.delete(this.CURRENT_SESSION_KEY)
-      await this.dataStore!.flush()
-      console.log('All data cleared successfully')
-      return true
-    } catch (error) {
-      console.error('Failed to clear data:', error)
-      return false
-    }
-  }
-  
-  // 检查是否有数据
-  async hasData(): Promise<boolean> {
-    if (!this.ensureInitialized()) return false
-    
-    try {
-      const sessionsData = await this.dataStore!.get(this.SESSIONS_KEY, '[]')
-      const sessions: SerializedSession[] = JSON.parse(sessionsData as string)
-      return Array.isArray(sessions) && sessions.length > 0
-    } catch (error) {
-      console.error('Failed to check data existence:', error)
-      return false
+      const id = await this.pref!.get('currentSessionId', '');
+      return id as string;
+    } catch (e) {
+      console.error('Failed to load current session ID:', e);
+      return '';
     }
   }
 }

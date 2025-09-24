@@ -1,3 +1,4 @@
+import { BookInfo } from '../model/BookInfo'
 import { ClientChatSession } from '../model/ClientChatModels'
 import { QAMessage } from '../model/QAMessage'
 import { ChatMessage } from '../model/ChatModels'
@@ -9,53 +10,38 @@ export class ClientSessionManager {
   private currentSessionId: string = ''
   private storageManager: StorageManager
   private isInitialized: boolean = false
-  private initializationPromise: Promise<void>
-  
+
   constructor() {
     this.storageManager = StorageManager.getInstance()
-    this.initializationPromise = this.initializeStorage()
   }
-  
-  // 初始化存储管理器
-  private async initializeStorage() {
+
+  async init(context: Context) {
+    if (this.isInitialized) {
+      return;
+    }
     try {
-      // 获取上下文并初始化存储
-      const context = this.getContext()
       if (context) {
         await this.storageManager.init(context)
       }
       this.isInitialized = true
       await this.loadSessions()
     } catch (error) {
-      console.error('初始化存储失败:', error)
-      // 如果存储初始化失败，稍后会创建默认会话
+      console.error('Failed to initialize ClientSessionManager:', error)
     }
   }
-  
-  // 获取上下文的方法
-  private getContext(): Context | null {
-    try {
-      // 尝试获取上下文
-      const context = getContext(this)
-      return context as Context
-    } catch (error) {
-      console.warn('无法获取上下文:', error)
-      return null
-    }
-  }
-  
+
   // 从持久化存储加载会话
   private async loadSessions() {
     if (!this.isInitialized) {
       console.warn('StorageManager not initialized yet')
       return
     }
-    
+
     try {
       // 从持久化存储加载会话数据
       const storedSessions = await this.storageManager.loadSessions()
       const storedCurrentId = await this.storageManager.loadCurrentSessionId()
-      
+
       if (storedSessions && storedSessions.length > 0) {
         this.sessions = storedSessions
       } else {
@@ -69,7 +55,7 @@ export class ClientSessionManager {
           })
         }
       }
-      
+
       if (storedCurrentId) {
         this.currentSessionId = storedCurrentId
       } else {
@@ -79,7 +65,7 @@ export class ClientSessionManager {
           this.currentSessionId = appStorageCurrentId
         }
       }
-      
+
       // 如果没有会话，创建一个默认会话
       if (this.sessions.length === 0) {
         // 注意：这里不能直接await，会导致循环依赖
@@ -87,11 +73,10 @@ export class ClientSessionManager {
         console.log('No sessions found, will create default session')
       }
     } catch (error) {
-      console.error('加载会话失败:', error)
-      await this.createSession(`${$r('app.string.new_session_title')}`)
+      console.error('Failed to load sessions:', error)
     }
   }
-  
+
   // 保存会话到持久化存储
   private async saveSessions() {
     // 仍然保存到AppStorage以保持向后兼容
@@ -99,23 +84,23 @@ export class ClientSessionManager {
       AppStorage.Set('chatSessions', this.sessions)
       AppStorage.Set('currentSessionId', this.currentSessionId)
     } catch (error) {
-      console.error('保存到AppStorage失败:', error)
+      console.error('Failed to save to AppStorage:', error)
     }
-    
+
     // 保存到持久化存储
     if (!this.isInitialized) {
       console.warn('StorageManager not initialized, skipping persistent save')
       return
     }
-    
+
     try {
       await this.storageManager.saveSessions(this.sessions)
       await this.storageManager.saveCurrentSessionId(this.currentSessionId)
     } catch (error) {
-      console.error('保存到持久化存储失败:', error)
+      console.error('Failed to save to persistent storage:', error)
     }
   }
-  
+
   // 创建新会话
   async createSession(title: string, bookName?: string): Promise<ClientChatSession> {
     // 如果有书籍名称，使用书籍名称作为标题
@@ -129,14 +114,14 @@ export class ClientSessionManager {
       updatedAt: new Date(),
       isActive: true
     }
-    
+
     this.sessions.unshift(newSession)
     this.currentSessionId = newSession.id
     await this.saveSessions()
-    
+
     return newSession
   }
-  
+
   // 切换会话
   async switchSession(sessionId: string): Promise<boolean> {
     const session = this.sessions.find(s => s.id === sessionId)
@@ -147,9 +132,9 @@ export class ClientSessionManager {
     }
     return false
   }
-  
+
   // 删除会话
-  async deleteSession(sessionId: string): Promise<boolean> {
+  async deleteSession(sessionId: string, defaultTitle: string): Promise<boolean> {
     const index = this.sessions.findIndex(s => s.id === sessionId)
     if (index !== -1) {
       this.sessions.splice(index, 1)
@@ -162,32 +147,32 @@ export class ClientSessionManager {
         // Note: We proceed with frontend deletion even if backend fails,
         // to maintain a responsive user experience.
       }
-      
+
       // 如果删除的是当前会话，切换到第一个会话
       if (sessionId === this.currentSessionId) {
         if (this.sessions.length > 0) {
           this.currentSessionId = this.sessions[0].id
         } else {
-          await this.createSession(`${$r('app.string.new_session_title')}`)
+          await this.createSession(defaultTitle)
         }
       }
-      
+
       await this.saveSessions()
       return true
     }
     return false
   }
-  
+
   // 获取当前会话
   getCurrentSession(): ClientChatSession | null {
     return this.sessions.find(s => s.id === this.currentSessionId) || null
   }
-  
+
   // 获取所有会话
   getAllSessions(): ClientChatSession[] {
     return this.sessions
   }
-  
+
   // 添加消息到当前会话
   async addMessageToCurrentSession(message: QAMessage): Promise<void> {
     const currentSession = this.getCurrentSession()
@@ -197,7 +182,7 @@ export class ClientSessionManager {
       await this.saveSessions()
     }
   }
-  
+
   // 清空当前会话消息
   async clearCurrentSessionMessages(): Promise<void> {
     const currentSession = this.getCurrentSession()
@@ -207,9 +192,9 @@ export class ClientSessionManager {
       await this.saveSessions()
     }
   }
-  
+
   // 更新会话书籍信息
-  async updateCurrentSessionBookInfo(bookName: string, bookInfo: Object): Promise<void> {
+  async updateCurrentSessionBookInfo(bookName: string, bookInfo: BookInfo): Promise<void> {
     const currentSession = this.getCurrentSession()
     if (currentSession) {
       currentSession.bookName = bookName
@@ -221,56 +206,58 @@ export class ClientSessionManager {
     }
   }
 
-  async clearCurrentSessionBookInfo(): Promise<void> {
+  async clearCurrentSessionBookInfo(defaultTitle: string): Promise<void> {
     const currentSession = this.getCurrentSession()
     if (currentSession) {
       currentSession.bookName = undefined
       currentSession.bookInfo = undefined
       // Optionally reset title if it was based on the book name
       if (currentSession.title.startsWith('📚')) {
-        currentSession.title = `${$r('app.string.new_session_title')}`
+        currentSession.title = defaultTitle
       }
       currentSession.updatedAt = new Date()
       await this.saveSessions()
     }
   }
 
-  
+
   // 获取用于API的聊天历史
   getChatHistoryForAPI(sessionId: string): ChatMessage[] {
     const session = this.sessions.find(s => s.id === sessionId)
     if (!session) {
       return []
     }
-    
+
     return session.messages.map((msg: QAMessage): ChatMessage => ({
       role: msg.type === 'question' ? 'user' : 'assistant',
       content: msg.content
     }))
   }
-  
+
   // 获取当前会话的聊天历史
   getCurrentChatHistoryForAPI(): ChatMessage[] {
     return this.getChatHistoryForAPI(this.currentSessionId)
   }
-  
+
   // 确保初始化完成
   async ensureInitialized(): Promise<void> {
-    await this.initializationPromise
-  }
-  
-  // 检查是否需要创建默认会话
-  async ensureDefaultSession(): Promise<void> {
-    if (this.sessions.length === 0) {
-      await this.createSession(`${$r('app.string.new_session_title')}`)
+    if (!this.isInitialized) {
+      console.error("ClientSessionManager not initialized. Call init() from the UI layer.");
     }
   }
-  
+
+  // 检查是否需要创建默认会话
+  async ensureDefaultSession(title: string): Promise<void> {
+    if (this.sessions.length === 0) {
+      await this.createSession(title)
+    }
+  }
+
   // 生成ID
   private generateId(): string {
     return Date.now().toString(36) + Math.random().toString(36).substr(2)
   }
-  
+
   // 获取会话统计
   getSessionStats(): SessionStats {
     const totalMessages = this.sessions.reduce((sum: number, session: ClientChatSession) => sum + session.messages.length, 0)

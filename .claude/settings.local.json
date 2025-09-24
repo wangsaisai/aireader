@@ -3,7 +3,15 @@
     "allow": [
       "Bash(mkdir:*)",
       "Bash(rm:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(bash aireader_hm/check_syntax.sh)",
+      "Bash(mv aireader_hm/entry/src/main/resources/zh-Hans aireader_hm/entry/src/main/resources/zh_CN)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(for lang in en_US zh_CN zh_TW)",
+      "Bash(do:*)",
+      "Bash(done)",
+      "Bash(bash:*)"
     ],
     "deny": []
   }
