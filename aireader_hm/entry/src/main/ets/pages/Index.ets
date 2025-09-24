@@ -64,7 +64,7 @@ struct Index {
   }
 
   async createNewSession(title?: string, bookName?: string) {
-    const sessionTitle = title || `${$r('app.string.new_chat')}`
+    const sessionTitle = title || await getContext(this).resourceManager.getStringValue($r('app.string.new_chat'));
     const session = await this.sessionManager.createSession(sessionTitle, bookName)
     this.updateSessionsFromManager()
     this.loadCurrentSession()
@@ -114,11 +114,31 @@ struct Index {
         if (fullBookInfo.is_found) {
           this.bookInfo = fullBookInfo
           await this.sessionManager.updateCurrentSessionBookInfo(this.bookInfo.title, this.bookInfo)
-          const bookInfoText = `${$r('app.string.book_info_title', this.bookInfo.title)}\n\n` +
-            `${$r('app.string.author')}：${this.bookInfo.author || `${$r('app.string.unknown')}`}\n` +
-            `${$r('app.string.publisher')}：${this.bookInfo.publisher || `${$r('app.string.unknown')}`}\n` +
-            `${$r('app.string.publication_year')}：${this.bookInfo.year || `${$r('app.string.unknown')}`}\n\n` +
-            `${$r('app.string.description')}：\n${this.bookInfo.description || `${$r('app.string.no_description')}`}`
+
+          const context = getContext(this);
+          const resolvedStrings = await Promise.all([
+            context.resourceManager.getStringValue($r('app.string.book_info_title', this.bookInfo.title)),
+            context.resourceManager.getStringValue($r('app.string.author')),
+            context.resourceManager.getStringValue($r('app.string.publisher')),
+            context.resourceManager.getStringValue($r('app.string.publication_year')),
+            context.resourceManager.getStringValue($r('app.string.description')),
+            context.resourceManager.getStringValue($r('app.string.unknown')),
+            context.resourceManager.getStringValue($r('app.string.no_description'))
+          ]);
+          const bookInfoTitle = resolvedStrings[0];
+          const authorLabel = resolvedStrings[1];
+          const publisherLabel = resolvedStrings[2];
+          const yearLabel = resolvedStrings[3];
+          const descriptionLabel = resolvedStrings[4];
+          const unknownStr = resolvedStrings[5];
+          const noDescriptionStr = resolvedStrings[6];
+
+          const bookInfoText = `${bookInfoTitle}\n\n` +
+            `${authorLabel}：${this.bookInfo.author || unknownStr}\n` +
+            `${publisherLabel}：${this.bookInfo.publisher || unknownStr}\n` +
+            `${yearLabel}：${this.bookInfo.year || unknownStr}\n\n` +
+            `${descriptionLabel}：\n${this.bookInfo.description || noDescriptionStr}`
+
           const bookInfoMessage = new QAMessage(bookInfoText, 'answer')
           await this.sessionManager.addMessageToCurrentSession(bookInfoMessage)
         } else {
@@ -320,16 +340,16 @@ struct Index {
               },
               onSessionDelete: (sessionId: string) => {
                 AlertDialog.show({
-                  title: `${$r('app.string.confirm_delete_title')}`,
-                  message: `${$r('app.string.confirm_delete_message')}`,
+                  title: $r('app.string.confirm_delete_title'),
+                  message: $r('app.string.confirm_delete_message'),
                   primaryButton: {
-                    value: `${$r('app.string.cancel')}`,
+                    value: $r('app.string.cancel'),
                     action: () => {
                       console.info('取消删除')
                     }
                   },
                   secondaryButton: {
-                    value: `${$r('app.string.delete')}`,
+                    value: $r('app.string.delete'),
                     fontColor: Color.Red,
                     action: () => {
                       this.deleteSession(sessionId)
@@ -366,12 +386,12 @@ struct Index {
     .height('100%')
   }
 
-  private getCurrentSessionTitle(): string {
+  private getCurrentSessionTitle(): string | Resource {
     if (!this.currentSessionId) {
-      return `${$r('app.string.new_chat')}`
+      return $r('app.string.new_chat')
     }
     const session = this.sessions.find(s => s.id === this.currentSessionId)
-    return session ? session.title : `${$r('app.string.unknown_session')}`
+    return session ? session.title : $r('app.string.unknown_session')
   }
 
   async handleSuggestionClick(suggestion: PromptSuggestion) {
