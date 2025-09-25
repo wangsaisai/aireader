@@ -116,22 +116,16 @@ struct Index {
           await this.sessionManager.updateCurrentSessionBookInfo(this.bookInfo.title, this.bookInfo)
 
           const context = getContext(this);
-          const resolvedStrings = await Promise.all([
-            context.resourceManager.getStringValue($r('app.string.book_info_title', this.bookInfo.title)),
-            context.resourceManager.getStringValue($r('app.string.author')),
-            context.resourceManager.getStringValue($r('app.string.publisher')),
-            context.resourceManager.getStringValue($r('app.string.publication_year')),
-            context.resourceManager.getStringValue($r('app.string.description')),
-            context.resourceManager.getStringValue($r('app.string.unknown')),
-            context.resourceManager.getStringValue($r('app.string.no_description'))
-          ]);
-          const bookInfoTitle = resolvedStrings[0];
-          const authorLabel = resolvedStrings[1];
-          const publisherLabel = resolvedStrings[2];
-          const yearLabel = resolvedStrings[3];
-          const descriptionLabel = resolvedStrings[4];
-          const unknownStr = resolvedStrings[5];
-          const noDescriptionStr = resolvedStrings[6];
+          const bookInfoTitleTemplate = await context.resourceManager.getStringValue($r('app.string.book_info_title'));
+          const bookInfoTitle = bookInfoTitleTemplate.replace('%s', this.bookInfo.title);
+
+          const authorLabel = await context.resourceManager.getStringValue($r('app.string.author'));
+          const publisherLabel = await context.resourceManager.getStringValue($r('app.string.publisher'));
+          const yearLabel = await context.resourceManager.getStringValue($r('app.string.publication_year'));
+          const descriptionLabel = await context.resourceManager.getStringValue($r('app.string.description'));
+          const unknownStr = await context.resourceManager.getStringValue($r('app.string.unknown'));
+          const noDescriptionStr = await context.resourceManager.getStringValue($r('app.string.no_description'));
+
 
           const bookInfoText = `${bookInfoTitle}\n\n` +
             `${authorLabel}：${this.bookInfo.author || unknownStr}\n` +
@@ -411,10 +405,10 @@ struct Index {
     this.showPromptSuggestions = false;
     const bookTitle = this.bookInfo.title;
     const bookAuthor = this.bookInfo.author;
-    const userMessage = new QAMessage(`${$r('app.string.generating_report_for', bookTitle)}`, 'question');
+    const userMessage = new QAMessage(await getContext(this).resourceManager.getStringValue($r('app.string.generating_report_for', bookTitle)), 'question');
     await this.sessionManager.addMessageToCurrentSession(userMessage);
     this.loadCurrentSession();
-    const systemMessage = new QAMessage(`${$r('app.string.report_generating_wait')}`, 'answer');
+    const systemMessage = new QAMessage(await getContext(this).resourceManager.getStringValue($r('app.string.report_generating_wait')), 'answer');
     await this.sessionManager.addMessageToCurrentSession(systemMessage);
     this.loadCurrentSession();
     this.isLoading = true;
@@ -424,7 +418,7 @@ struct Index {
       await this.sessionManager.addMessageToCurrentSession(reportMessage);
       this.loadCurrentSession();
     } catch (error) {
-      const errorMessage = new QAMessage(`${$r('app.string.report_generation_failed', error.message)}`, 'answer');
+      const errorMessage = new QAMessage(await getContext(this).resourceManager.getStringValue($r('app.string.report_generation_failed', error.message)), 'answer');
       await this.sessionManager.addMessageToCurrentSession(errorMessage);
       this.loadCurrentSession();
     } finally {
