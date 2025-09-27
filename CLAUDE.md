@@ -45,14 +45,32 @@ The backend is a FastAPI application that serves as a proxy between the HarmonyO
 
 ### Architecture
 
-The frontend is a native HarmonyOS application written in ArkTS. It features a unified chat interface for both querying book information and conducting Q&A sessions. It includes features like Markdown rendering for AI responses, multi-round conversation memory, and local data persistence using HarmonyOS's Preferences API.
+The frontend is a native HarmonyOS application written in ArkTS. It features a unified chat interface for both querying book information and conducting Q&A sessions.
 
 -   **`entry/src/main/ets/pages/Index.ets`**: The main and only page of the application, handling the entire user interaction.
--   **`entry/src/main/ets/services/`**: Contains `ApiService.ets` for backend communication, `StorageManager.ets` for data persistence, and `ClientSessionManager.ets` for session management.
--   **`entry/src/main/ets/components/`**: Reusable UI components like `QAComponent.ets` and `MarkdownRenderer.ets`.
+-   **`entry/src/main/ets/components/`**: Reusable UI components.
+    -   `QAComponent.ets`: Chat message component.
+    -   `MarkdownRenderer.ets`: Renders AI responses in Markdown.
+    -   `LoadingComponent.ets`: Loading animation.
+    -   `SessionListComponent.ets`: Sidebar for conversation history.
+-   **`entry/src/main/ets/services/`**: Service layer.
+    -   `ApiService.ets`: Handles backend communication.
+    -   `StorageManager.ets`: Manages data persistence using HarmonyOS's Preferences API.
+    -   `ClientSessionManager.ets`: Manages conversation sessions.
 -   **`entry/src/main/ets/model/`**: Data models for the application.
+    -   `BookInfo.ets`: Book information model.
+    -   `QAMessage.ets`: Chat message model.
+    -   `ChatModels.ets`: Conversation memory model.
 -   **`hvigorfile.ts`**: Build script for the HarmonyOS app.
 -   **`oh-package.json5`**: Project dependencies.
+
+### Key Features
+
+-   **Unified Chat Interface**: Combines book search and AI Q&A in a single view.
+-   **Markdown Rendering**: AI responses are rendered with support for headers, lists, code blocks, and text formatting.
+-   **Multi-turn Conversation Memory**: The app manages conversation history, allowing for context-aware follow-up questions.
+-   **Data Persistence**: Session data is saved locally using the HarmonyOS Preferences API, allowing conversations to be restored when the app restarts.
+-   **Multi-language Support**: The app supports Chinese (Simplified and Traditional) and English.
 
 ### Development Setup
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!--
+   In order to reduce the risk of leaking private data, we explicitly specify which files
+   are eligible for backup.
+   See https://developer.android.com/guide/topics/data/autobackup#ChoosingFiles
+   -->
+    <include
+        domain="database"
+        path="." />
+    <include
+        domain="sharedpref"
+        path="." />
+    <!-- Exclude specific shared preferences that contain sensitive data. -->
+    <!-- <exclude
+        domain="sharedpref"
+        path="your_secret_keys.xml" /> -->
+</full-backup-content>
