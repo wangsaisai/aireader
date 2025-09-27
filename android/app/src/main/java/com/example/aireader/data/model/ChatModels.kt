@@ -4,7 +4,14 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class ChatSession(
-    @Json(name = "sessionId") val sessionId: String,
-    @Json(name = "history") val history: MutableList<QAMessage>
+data class ChatMessage(
+    val role: String,
+    val content: String
+)
+
+@JsonClass(generateAdapter = true)
+data class ChatRequest(
+    @Json(name = "book_name") val bookName: String,
+    val messages: List<ChatMessage>,
+    val question: String
 )
