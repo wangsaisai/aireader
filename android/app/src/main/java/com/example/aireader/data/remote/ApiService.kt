@@ -12,6 +12,8 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.POST
 import retrofit2.http.Path
+import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 
 interface ApiService {
     @POST("/api/book/info")
@@ -35,12 +37,18 @@ interface ApiService {
     companion object {
         private const val BASE_URL = "http://34.176.0.152:8080"
 
+        private val okHttpClient = OkHttpClient.Builder()
+            .readTimeout(180, TimeUnit.SECONDS)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .build()
+
         private val moshi = Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
             .build()
 
         private val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
+            .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
 

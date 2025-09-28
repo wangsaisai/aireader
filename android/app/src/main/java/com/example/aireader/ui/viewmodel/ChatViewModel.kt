@@ -76,7 +76,7 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
                     // Get book info
                     repository.getBookInfo(input)
                         .onSuccess { bookInfo ->
-                            if (bookInfo.isFound) {
+                            if (bookInfo.isFound == true) {
                                 val bookInfoMessage = QAMessage(
                                     content = formatBookInfo(bookInfo),
                                     type = MessageType.ANSWER
@@ -85,7 +85,7 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
                                 addMessageToCurrentSession(bookInfoMessage)
                             } else {
                                 val notFoundMessage = QAMessage(
-                                    content = bookInfo.notFoundReason,
+                                    content = bookInfo.notFoundReason ?: "Book not found, and no reason was provided.",
                                     type = MessageType.ANSWER
                                 )
                                 addMessageToCurrentSession(notFoundMessage)
@@ -132,7 +132,7 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
 
     private fun updateCurrentSessionBookInfo(bookInfo: BookInfo) {
         _currentSession.value?.let { session ->
-            val updatedSession = session.copy(bookInfo = bookInfo, bookName = bookInfo.title, title = "📚 ${bookInfo.title}")
+            val updatedSession = session.copy(bookInfo = bookInfo, bookName = bookInfo.title, title = "📚 ${bookInfo.title ?: "Unknown Title"}")
             updateSessionInList(updatedSession)
         }
     }
@@ -152,13 +152,13 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
 
     private fun formatBookInfo(bookInfo: BookInfo): String {
         return """
-            Title: ${bookInfo.title}
-            Author: ${bookInfo.author}
-            Publisher: ${bookInfo.publisher}
-            Year: ${bookInfo.year}
+            Title: ${bookInfo.title ?: "Unknown"}
+            Author: ${bookInfo.author ?: "Unknown"}
+            Publisher: ${bookInfo.publisher ?: "Unknown"}
+            Year: ${bookInfo.year ?: "Unknown"}
 
             Description:
-            ${bookInfo.description}
+            ${bookInfo.description ?: "No description available."}
         """.trimIndent()
     }
 }
