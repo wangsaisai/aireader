@@ -18,4 +18,6 @@ interface ChatRepository {
     suspend fun saveSessions(sessions: List<ClientChatSession>)
     fun getCurrentSessionId(): Flow<String>
     suspend fun saveCurrentSessionId(sessionId: String)
+    fun getString(resId: Int): String
+
 }

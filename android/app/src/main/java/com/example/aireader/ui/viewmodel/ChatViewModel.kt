@@ -5,9 +5,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.aireader.data.model.*
 import com.example.aireader.domain.repository.ChatRepository
+import com.example.aireader.R
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
+
+data class Prompt(
+    val title: Int,
+    val prompt: Int
+)
 
 class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
 
@@ -19,6 +25,9 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _promptSuggestions = MutableStateFlow<List<Prompt>>(emptyList())
+    val promptSuggestions: StateFlow<List<Prompt>> = _promptSuggestions.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -90,6 +99,7 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
                                 )
                                 addMessageToCurrentSession(notFoundMessage)
                             }
+                            loadPromptSuggestions()
                         }
                         .onFailure {
                             val errorMessage = QAMessage(content = it.message ?: "Error", type = MessageType.ANSWER)
@@ -160,6 +170,24 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
             Description:
             ${bookInfo.description ?: "No description available."}
         """.trimIndent()
+    }
+
+    private fun loadPromptSuggestions() {
+        val prompts = listOf(
+            Prompt(R.string.prompt_title_core_insights, R.string.prompt_prompt_core_insights),
+            Prompt(R.string.prompt_title_key_concepts, R.string.prompt_prompt_key_concepts),
+            Prompt(R.string.prompt_title_quotes, R.string.prompt_prompt_quotes),
+            Prompt(R.string.prompt_title_reviews, R.string.prompt_prompt_reviews),
+            Prompt(R.string.prompt_title_reading_strategies, R.string.prompt_prompt_reading_strategies),
+            Prompt(R.string.prompt_title_target_audience, R.string.prompt_prompt_target_audience),
+            Prompt(R.string.prompt_title_generate_report, R.string.prompt_prompt_generate_report)
+        )
+        _promptSuggestions.value = prompts
+    }
+
+    fun processPrompt(prompt: Prompt) {
+        val promptText = repository.getString(prompt.prompt)
+        processMessage(promptText)
     }
 }
 

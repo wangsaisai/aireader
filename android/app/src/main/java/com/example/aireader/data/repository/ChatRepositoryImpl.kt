@@ -129,4 +129,8 @@ class ChatRepositoryImpl(
             preferences[PreferencesKeys.CURRENT_SESSION_ID] = sessionId
         }
     }
+
+    override fun getString(resId: Int): String {
+        return context.getString(resId)
+    }
 }
