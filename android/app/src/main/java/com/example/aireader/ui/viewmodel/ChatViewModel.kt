@@ -1,21 +1,20 @@
 package com.example.aireader.ui.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.aireader.R
 import com.example.aireader.data.model.*
 import com.example.aireader.domain.repository.ChatRepository
-import com.example.aireader.R
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
 
-data class Prompt(
-    val title: Int,
-    val prompt: Int
-)
-
-class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
+class ChatViewModel(
+    private val repository: ChatRepository,
+    private val context: Context
+    ) : ViewModel() {
 
     private val _sessions = MutableStateFlow<List<ClientChatSession>>(emptyList())
     val sessions: StateFlow<List<ClientChatSession>> = _sessions.asStateFlow()
@@ -29,12 +28,20 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
     private val _promptSuggestions = MutableStateFlow<List<Prompt>>(emptyList())
     val promptSuggestions: StateFlow<List<Prompt>> = _promptSuggestions.asStateFlow()
 
+
     init {
         viewModelScope.launch {
             repository.getSessions().collect { sessions ->
                 _sessions.value = sessions
-                repository.getCurrentSessionId().firstOrNull()?.let { currentId ->
-                    _currentSession.value = sessions.find { it.id == currentId }
+                if (sessions.isNotEmpty()) {
+                    repository.getCurrentSessionId().firstOrNull()?.let { currentId ->
+                        val sessionToSelect = sessions.find { it.id == currentId } ?: sessions.first()
+                        _currentSession.value = sessionToSelect
+                        updatePromptSuggestions(sessionToSelect)
+                    }
+                } else {
+                    // Create a default session if none exist
+                    createNewSession(context.getString(R.string.new_chat_title))
                 }
             }
         }
@@ -45,16 +52,16 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
             val newSession = ClientChatSession(title = bookName ?: title, bookName = bookName)
             val updatedSessions = listOf(newSession) + _sessions.value
             _sessions.value = updatedSessions
-            _currentSession.value = newSession
-            repository.saveSessions(updatedSessions)
-            repository.saveCurrentSessionId(newSession.id)
+            switchSession(newSession.id)
         }
     }
 
     fun switchSession(sessionId: String) {
         viewModelScope.launch {
-            _currentSession.value = _sessions.value.find { it.id == sessionId }
+            val newSession = _sessions.value.find { it.id == sessionId }
+            _currentSession.value = newSession
             repository.saveCurrentSessionId(sessionId)
+            updatePromptSuggestions(newSession)
         }
     }
 
@@ -64,8 +71,7 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
             _sessions.value = updatedSessions
             if (_currentSession.value?.id == sessionId) {
                 val newCurrent = updatedSessions.firstOrNull()
-                _currentSession.value = newCurrent
-                repository.saveCurrentSessionId(newCurrent?.id ?: "")
+                switchSession(newCurrent?.id ?: "")
             }
             repository.saveSessions(updatedSessions)
         }
@@ -85,7 +91,7 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
                     // Get book info
                     repository.getBookInfo(input)
                         .onSuccess { bookInfo ->
-                            if (bookInfo.isFound == true) {
+                            if (bookInfo.isFound ?: false) {
                                 val bookInfoMessage = QAMessage(
                                     content = formatBookInfo(bookInfo),
                                     type = MessageType.ANSWER
@@ -94,15 +100,14 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
                                 addMessageToCurrentSession(bookInfoMessage)
                             } else {
                                 val notFoundMessage = QAMessage(
-                                    content = bookInfo.notFoundReason ?: "Book not found, and no reason was provided.",
+                                    content = bookInfo.notFoundReason ?: "",
                                     type = MessageType.ANSWER
                                 )
                                 addMessageToCurrentSession(notFoundMessage)
                             }
-                            loadPromptSuggestions()
                         }
                         .onFailure {
-                            val errorMessage = QAMessage(content = it.message ?: "Error", type = MessageType.ANSWER)
+                            val errorMessage = QAMessage(content = it.message ?: context.getString(R.string.default_error_message), type = MessageType.ANSWER)
                             addMessageToCurrentSession(errorMessage)
                         }
                 } else {
@@ -123,13 +128,17 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
                             addMessageToCurrentSession(answerMessage)
                         }
                         .onFailure {
-                            val errorMessage = QAMessage(content = it.message ?: "Error", type = MessageType.ANSWER)
+                            val errorMessage = QAMessage(content = it.message ?: context.getString(R.string.default_error_message), type = MessageType.ANSWER)
                             addMessageToCurrentSession(errorMessage)
                         }
                 }
             }
             _isLoading.value = false
         }
+    }
+
+    fun processPrompt(prompt: Prompt) {
+        processMessage(context.getString(prompt.prompt))
     }
 
     private fun addMessageToCurrentSession(message: QAMessage) {
@@ -142,8 +151,9 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
 
     private fun updateCurrentSessionBookInfo(bookInfo: BookInfo) {
         _currentSession.value?.let { session ->
-            val updatedSession = session.copy(bookInfo = bookInfo, bookName = bookInfo.title, title = "📚 ${bookInfo.title ?: "Unknown Title"}")
+            val updatedSession = session.copy(bookInfo = bookInfo, bookName = bookInfo.title, title = "📚 ${bookInfo.title}")
             updateSessionInList(updatedSession)
+            updatePromptSuggestions(updatedSession)
         }
     }
 
@@ -162,40 +172,41 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
 
     private fun formatBookInfo(bookInfo: BookInfo): String {
         return """
-            Title: ${bookInfo.title ?: "Unknown"}
-            Author: ${bookInfo.author ?: "Unknown"}
-            Publisher: ${bookInfo.publisher ?: "Unknown"}
-            Year: ${bookInfo.year ?: "Unknown"}
+            ${context.getString(R.string.book_info_title)}: ${bookInfo.title ?: context.getString(R.string.book_info_unknown)}
+            ${context.getString(R.string.book_info_author)}: ${bookInfo.author ?: context.getString(R.string.book_info_unknown)}
+            ${context.getString(R.string.book_info_publisher)}: ${bookInfo.publisher ?: context.getString(R.string.book_info_unknown)}
+            ${context.getString(R.string.book_info_year)}: ${bookInfo.year ?: context.getString(R.string.book_info_unknown)}
 
-            Description:
-            ${bookInfo.description ?: "No description available."}
+            ${context.getString(R.string.book_info_description)}:
+            ${bookInfo.description}
         """.trimIndent()
     }
 
-    private fun loadPromptSuggestions() {
-        val prompts = listOf(
-            Prompt(R.string.prompt_title_core_insights, R.string.prompt_prompt_core_insights),
-            Prompt(R.string.prompt_title_key_concepts, R.string.prompt_prompt_key_concepts),
-            Prompt(R.string.prompt_title_quotes, R.string.prompt_prompt_quotes),
-            Prompt(R.string.prompt_title_reviews, R.string.prompt_prompt_reviews),
-            Prompt(R.string.prompt_title_reading_strategies, R.string.prompt_prompt_reading_strategies),
-            Prompt(R.string.prompt_title_target_audience, R.string.prompt_prompt_target_audience),
-            Prompt(R.string.prompt_title_generate_report, R.string.prompt_prompt_generate_report)
-        )
-        _promptSuggestions.value = prompts
-    }
-
-    fun processPrompt(prompt: Prompt) {
-        val promptText = repository.getString(prompt.prompt)
-        processMessage(promptText)
+    private fun updatePromptSuggestions(session: ClientChatSession?) {
+        _promptSuggestions.value = if (session?.bookInfo != null) {
+            listOf(
+                Prompt.CoreInsights,
+                Prompt.KeyConcepts,
+                Prompt.Quotes,
+                Prompt.Reviews,
+                Prompt.ReadingStrategies,
+                Prompt.TargetAudience,
+                Prompt.GenerateReport
+            )
+        } else {
+            emptyList()
+        }
     }
 }
 
-class ChatViewModelFactory(private val repository: ChatRepository) : ViewModelProvider.Factory {
+class ChatViewModelFactory(
+    private val repository: ChatRepository,
+    private val context: Context
+    ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ChatViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ChatViewModel(repository) as T
+            return ChatViewModel(repository, context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

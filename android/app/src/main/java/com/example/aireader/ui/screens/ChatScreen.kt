@@ -2,7 +2,6 @@ package com.example.aireader.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -17,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.aireader.R
 import com.example.aireader.data.model.ClientChatSession
 import com.example.aireader.ui.components.MessageItem
 import com.example.aireader.ui.viewmodel.ChatViewModel
@@ -51,22 +51,23 @@ fun ChatScreen(viewModel: ChatViewModel) {
     ) {
         Scaffold(
             topBar = {
+                val newChatTitle = stringResource(id = R.string.new_chat_title)
                 TopAppBar(
                     title = {
                         Text(
-                            text = currentSession?.title ?: "AI Reader",
+                            text = currentSession?.title ?: stringResource(id = R.string.app_name),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                            Icon(Icons.Default.Menu, contentDescription = stringResource(id = R.string.menu_description))
                         }
                     },
                     actions = {
-                        IconButton(onClick = { viewModel.createNewSession("New Chat") }) {
-                            Icon(Icons.Default.Add, contentDescription = "New Session")
+                        IconButton(onClick = { viewModel.createNewSession(newChatTitle) }) {
+                            Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.new_session_description))
                         }
                     }
                 )
@@ -108,6 +109,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 }
 
                 var text by remember { mutableStateOf("") }
+                val placeholderText = if (currentSession?.bookInfo == null) stringResource(id = R.string.enter_book_title_placeholder) else stringResource(id = R.string.ask_question_placeholder)
                 ChatInput(
                     text = text,
                     onTextChange = { text = it },
@@ -116,7 +118,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         text = ""
                     },
                     enabled = !isLoading,
-                    placeholder = if (currentSession?.bookInfo == null) "Enter a book title..." else "Ask a question..."
+                    placeholder = placeholderText
                 )
             }
         }
@@ -146,7 +148,7 @@ fun ChatInput(
         )
         Spacer(modifier = Modifier.width(8.dp))
         Button(onClick = onSendMessage, enabled = enabled && text.isNotBlank()) {
-            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
+            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(id = R.string.send_button_description))
         }
     }
 }
@@ -159,7 +161,7 @@ fun SessionListComponent(
     onSessionDelete: (String) -> Unit
 ) {
     ModalDrawerSheet {
-        Text("Sessions", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(id = R.string.sessions_title), modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleMedium)
         HorizontalDivider()
         LazyColumn {
             items(sessions) { session ->
@@ -174,7 +176,7 @@ fun SessionListComponent(
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(onClick = { onSessionDelete(session.id) }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete Session")
+                        Icon(Icons.Default.Delete, contentDescription = stringResource(id = R.string.delete_session_description))
                     }
                 }
             }

@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.activity.viewModels
 import com.example.aireader.data.remote.ApiService
 import com.example.aireader.data.repository.ChatRepositoryImpl
 import com.example.aireader.domain.repository.ChatRepository
@@ -23,7 +22,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private val viewModel: ChatViewModel by viewModels {
-        ChatViewModelFactory(repository)
+        ChatViewModelFactory(repository, applicationContext)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
