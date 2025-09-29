@@ -32,6 +32,30 @@ fun ChatScreen(viewModel: ChatViewModel) {
     val promptSuggestions by viewModel.promptSuggestions.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    var sessionToDeleteId by remember { mutableStateOf<String?>(null) }
+
+    if (sessionToDeleteId != null) {
+        AlertDialog(
+            onDismissRequest = { sessionToDeleteId = null },
+            title = { Text(stringResource(id = R.string.delete_session_confirmation_title)) },
+            text = { Text(stringResource(id = R.string.delete_session_confirmation_text)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        sessionToDeleteId?.let { viewModel.deleteSession(it) }
+                        sessionToDeleteId = null
+                    }
+                ) {
+                    Text(stringResource(id = R.string.delete_session_confirm_button))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { sessionToDeleteId = null }) {
+                    Text(stringResource(id = R.string.delete_session_cancel_button))
+                }
+            }
+        )
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -44,7 +68,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     scope.launch { drawerState.close() }
                 },
                 onSessionDelete = { sessionId ->
-                    viewModel.deleteSession(sessionId)
+                    sessionToDeleteId = sessionId
                 }
             )
         }

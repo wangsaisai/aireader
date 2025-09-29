@@ -138,7 +138,32 @@ class ChatViewModel(
     }
 
     fun processPrompt(prompt: Prompt) {
-        processMessage(context.getString(prompt.prompt))
+        when (prompt) {
+            is Prompt.GenerateReport -> generateReport()
+            else -> processMessage(context.getString(prompt.prompt))
+        }
+    }
+
+    private fun generateReport() {
+        val current = _currentSession.value ?: return
+        val bookInfo = current.bookInfo ?: return
+
+        val userMessage = QAMessage(content = context.getString(R.string.generating_report_message), type = MessageType.QUESTION)
+        addMessageToCurrentSession(userMessage)
+
+        _isLoading.value = true
+        viewModelScope.launch {
+            repository.generateDetailedReport(bookInfo.title ?: "", bookInfo.author)
+                .onSuccess { report ->
+                    val reportMessage = QAMessage(content = report, type = MessageType.ANSWER)
+                    addMessageToCurrentSession(reportMessage)
+                }
+                .onFailure {
+                    val errorMessage = QAMessage(content = it.message ?: context.getString(R.string.default_error_message), type = MessageType.ANSWER)
+                    addMessageToCurrentSession(errorMessage)
+                }
+            _isLoading.value = false
+        }
     }
 
     private fun addMessageToCurrentSession(message: QAMessage) {
