@@ -117,6 +117,14 @@
       "value": "#337AD9"
     },
     {
+      "name": "icon_primary",
+      "value": "#000000"
+    },
+    {
+      "name": "icon_disabled",
+      "value": "#cccccc"
+    },
+    {
       "name": "session_item_selected_text_tertiary",
       "value": "#6699D9"
     }

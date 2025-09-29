@@ -86,7 +86,11 @@ struct Index {
       this.showPromptSuggestions = false
     }
     setTimeout(() => {
-      this.scroller.scrollEdge(Edge.Bottom)
+      if (this.messages.length > 0) {
+        this.scroller.scrollToIndex(this.messages.length - 1);
+      } else {
+        this.scroller.scrollEdge(Edge.Bottom);
+      }
     }, 100)
   }
 
@@ -169,7 +173,11 @@ struct Index {
         this.showPromptSuggestions = true
       }
       setTimeout(() => {
-        this.scroller.scrollEdge(Edge.Bottom)
+        if (this.messages.length > 0) {
+          this.scroller.scrollToIndex(this.messages.length - 1);
+        } else {
+          this.scroller.scrollEdge(Edge.Bottom);
+        }
       }, 100)
     }
   }
@@ -177,16 +185,17 @@ struct Index {
   handleFeedback = async (message: QAMessage, feedback: 'like' | 'dislike') => {
     if (feedback === 'like') {
       try {
+        const unknownBook = await getContext(this).resourceManager.getStringValue($r('app.string.unknown_book'));
         const likeData: LikeData = {
           message_id: message.id,
           session_id: this.currentSessionId,
-          book_name: this.bookInfo?.title || `${$r('app.string.unknown_book')}`,
+          book_name: this.bookInfo?.title || unknownBook,
           message_content: message.content
         };
         await ApiService.submitLike(likeData);
-        promptAction.showToast({ message: `${$r('app.string.feedback_thanks')}` });
+        promptAction.showToast({ message: $r('app.string.feedback_thanks') });
       } catch (error) {
-        promptAction.showToast({ message: `${$r('app.string.like_failed', error.message)}` });
+        promptAction.showToast({ message: $r('app.string.like_failed', error.message) });
       }
     } else {
       this.dialogController = new CustomDialogController({
@@ -203,18 +212,19 @@ struct Index {
 
   handleSubmitFeedback = async (message: QAMessage, reasons: string[], details: string) => {
     try {
+      const unknownBook = await getContext(this).resourceManager.getStringValue($r('app.string.unknown_book'));
       const complaint: ComplaintData = {
         message_id: message.id,
         session_id: this.currentSessionId,
         reasons: reasons,
         details: details,
-        book_name: this.bookInfo?.title || `${$r('app.string.unknown_book')}`,
+        book_name: this.bookInfo?.title || unknownBook,
         message_content: message.content
       };
       await ApiService.submitComplaint(complaint);
-      promptAction.showToast({ message: `${$r('app.string.feedback_submitted_thanks')}` });
+      promptAction.showToast({ message: $r('app.string.feedback_submitted_thanks') });
     } catch (error) {
-      promptAction.showToast({ message: `${$r('app.string.submit_failed', error.message)}` });
+      promptAction.showToast({ message: $r('app.string.submit_failed', error.message) });
     }
   }
 
@@ -267,18 +277,17 @@ struct Index {
           .margin({ bottom: 12 })
           .padding({ left: 8, right: 8 })
         }
-        Scroll(this.scroller) {
-          Column() {
-            ForEach(this.messages, (message: QAMessage) => {
+        List({ scroller: this.scroller }) {
+          ForEach(this.messages, (message: QAMessage) => {
+            ListItem() {
               QAComponent({
                 message: message,
                 onFeedback: async (feedback: 'like' | 'dislike') => { await this.handleFeedback(message, feedback) }
               })
-            }, (item: QAMessage) => item.id)
-          }
-          .width('100%')
-          .padding({ left: 12, right: 12 })
+            }
+          }, (item: QAMessage) => item.id)
         }
+        .padding({ left: 12, right: 12 })
         .layoutWeight(1)
         .width('100%')
         .scrollBar(BarState.Off)
@@ -425,7 +434,11 @@ struct Index {
       this.isLoading = false;
       this.updateSessionsFromManager();
       setTimeout(() => {
-        this.scroller.scrollEdge(Edge.Bottom);
+        if (this.messages.length > 0) {
+          this.scroller.scrollToIndex(this.messages.length - 1);
+        } else {
+          this.scroller.scrollEdge(Edge.Bottom);
+        }
       }, 100);
     }
   }

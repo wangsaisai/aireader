@@ -198,7 +198,7 @@
     },
     {
       "name": "prompt_title_core_insights",
-      "value": "核心洞見與主要觀點"
+      "value": "觀點"
     },
     {
       "name": "prompt_prompt_core_insights",
@@ -206,7 +206,7 @@
     },
     {
       "name": "prompt_title_key_concepts",
-      "value": "關鍵概念與理論框架"
+      "value": "概念"
     },
     {
       "name": "prompt_prompt_key_concepts",
@@ -214,7 +214,7 @@
     },
     {
       "name": "prompt_title_quotes",
-      "value": "名言警句/精彩摘錄"
+      "value": "摘錄"
     },
     {
       "name": "prompt_prompt_quotes",
@@ -222,7 +222,7 @@
     },
     {
       "name": "prompt_title_reviews",
-      "value": "評價、爭議與影響"
+      "value": "評價"
     },
     {
       "name": "prompt_prompt_reviews",
@@ -230,7 +230,7 @@
     },
     {
       "name": "prompt_title_reading_strategies",
-      "value": "閱讀策略與建議"
+      "value": "閱讀建議"
     },
     {
       "name": "prompt_prompt_reading_strategies",
@@ -238,7 +238,7 @@
     },
     {
       "name": "prompt_title_target_audience",
-      "value": "目標讀者與同類書比較"
+      "value": "目標讀者"
     },
     {
       "name": "prompt_prompt_target_audience",
@@ -246,7 +246,7 @@
     },
     {
       "name": "prompt_title_generate_report",
-      "value": "生成詳細書籍報告"
+      "value": "書籍報告"
     },
     {
       "name": "prompt_prompt_generate_report",

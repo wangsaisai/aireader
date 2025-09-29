@@ -125,17 +125,16 @@ export struct SessionListComponent {
         .alignItems(HorizontalAlign.Start)
         
         // 删除按钮
-        Button($r('app.string.delete'))
-          .fontSize(12)
+        Image($r('app.media.ic_delete'))
+          .width(24)
           .height(24)
-          .width(48)
-          .backgroundColor(params.isSelected ? $r('app.color.session_item_delete_button_bg_disabled') : $r('app.color.session_item_delete_button_bg'))
-          .enabled(!params.isSelected)
+          .fillColor(params.isSelected ? $r('app.color.icon_disabled') : $r('app.color.icon_primary'))
           .onClick(() => {
             if (!params.isSelected) {
               params.onDelete()
             }
           })
+          .enabled(!params.isSelected)
       }
       .width('100%')
       .padding(12)
