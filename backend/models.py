@@ -24,7 +24,7 @@ class Book(Base):
     __tablename__ = "books"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
-    input_title = Column(String(255))
+    aliases = Column(Text)
     author = Column(String(255))
     introduction = Column(Text)
     report = Column(Text)

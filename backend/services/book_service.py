@@ -24,10 +24,24 @@ class BookService:
     async def get_book_introduction(self, title: str, input_title: Optional[str] = None, author: Optional[str] = None) -> (Optional[Dict[str, Any]], BackgroundTask):
         """获取书籍简介"""
         stmt = select(Book).where(
-            (Book.title == title) | (Book.input_title == title)
+            (Book.title == title) |
+            (Book.aliases.like(f"%,{title},%"))
         )
         result = await self.db.execute(stmt)
         book = result.scalars().first()
+
+        if book:
+            # If the book is found and the queried title is not in the aliases, add it.
+            if title != book.title:
+                # Ensure aliases string exists and is not empty
+                if not book.aliases:
+                    book.aliases = f",{title},"
+                # Check if the alias is already in the list
+                elif f",{title}," not in book.aliases:
+                    book.aliases += f"{title},"
+
+                await self.db.commit()
+                await self.db.refresh(book)
 
         if book and book.introduction:
             try:
@@ -54,7 +68,7 @@ class BookService:
             book = Book(
                 title=book_info.title or title,
                 author=book_info.author or author,
-                input_title=input_title
+                aliases=f",{title},"
             )
             self.db.add(book)
             await self.db.commit()

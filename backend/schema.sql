@@ -5,7 +5,7 @@
 CREATE TABLE books (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    input_title VARCHAR(255),
+    aliases TEXT,
     author VARCHAR(255),
     introduction TEXT, -- AI-generated book introduction
     report TEXT, -- AI-generated book report

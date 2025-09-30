@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 class BookInfo(BaseModel):
     """书籍信息数据模型"""
     title: str = Field(..., description="书籍标题")
-    input_title: Optional[str] = Field(None, description="输入的书籍标题")
+    aliases: Optional[str] = Field(None, description="书籍别名，逗号分隔")
     author: Optional[str] = Field(None, description="作者")
     publisher: Optional[str] = Field(None, description="出版社")
     year: Optional[str] = Field(None, description="出版年份")
@@ -24,7 +24,6 @@ class QAResponse(BaseModel):
 class BookInfoRequest(BaseModel):
     """书籍信息请求数据模型"""
     book_name: str = Field(..., description="书籍名称")
-    input_title: Optional[str] = Field(None, description="输入的书籍标题")
     author: Optional[str] = Field(None, description="作者名称")
 
 class APIResponse(BaseModel):
