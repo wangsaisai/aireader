@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AIReader</string>
+    <string name="app_name">AI Reader</string>
     <string name="app_bar_title">AI Book Assistant</string>
     <string name="chat_input_placeholder">Type a message</string>
     <string name="send_button_description">Send</string>

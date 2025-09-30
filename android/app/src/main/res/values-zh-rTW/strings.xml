@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AI 閱讀器</string>
+    <string name="app_name">AI讀書</string>
     <string name="app_bar_title">AI 圖書助手</string>
     <string name="chat_input_placeholder">輸入訊息</string>
     <string name="send_button_description">傳送</string>
