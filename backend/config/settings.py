@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, model_validator
 
 class Settings(BaseSettings):
     """应用配置"""
@@ -18,10 +18,25 @@ class Settings(BaseSettings):
     # Google API配置
     google_api_key: Optional[str] = Field(default=None, env="GOOGLE_API_KEY")
     gemini_model: str = Field(default="gemini-2.0-flash", env="GEMINI_MODEL")
+
+    # 数据库配置
+    # The password should be set in a .env file via PG_PASSWORD
+    pg_password: str = Field(env="PG_PASSWORD")
+    DATABASE_URL: Optional[str] = Field(default=None)
+
+    @model_validator(mode='after')
+    def assemble_db_url(self) -> 'Settings':
+        """Constructs DATABASE_URL from components if not provided directly."""
+        if self.DATABASE_URL is None:
+            user = "postgres"
+            host = "127.0.0.1"
+            db_name = "airead"
+            self.DATABASE_URL = f"postgresql+asyncpg://{user}:{self.pg_password}@{host}/{db_name}"
+        return self
+
     
     # 日志配置
     log_level: str = Field(default="INFO", env="LOG_LEVEL")
-    log_file: str = Field(default="app.log", env="LOG_FILE")
     
     # CORS配置
     cors_origins: list = Field(default=["*"], env="CORS_ORIGINS")
@@ -60,6 +75,10 @@ class Settings(BaseSettings):
         
         if not self.google_api_key:
             errors.append("GOOGLE_API_KEY is required")
+
+        # Pydantic will automatically validate that PG_PASSWORD is set,
+        # so an explicit check for DATABASE_URL is no longer needed.
+
         
         if self.gemini_model not in self.gemini_model_options.values():
             errors.append(f"Invalid GEMINI_MODEL: {self.gemini_model}")

@@ -72,3 +72,6 @@ yarn-error.log*
 .temp/
 
 secret/
+
+# Android Gradle
+/android/gradle/

@@ -8,11 +8,14 @@ import sys
 import os
 import uvicorn
 import time
-from datetime import datetime
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+import json
 from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, Response
+from starlette.background import BackgroundTask
+from starlette.types import Message
 
 # 添加当前目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -20,37 +23,34 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config.settings import settings
 from api.routes import router
 from utils.helpers import log_error
+from database import init_db, AsyncSessionLocal
+from models import APIRequestLog
 
 # 配置日志
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper()),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(settings.log_file),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.StreamHandler()]
 )
-
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    # 启动时执行
     logger.info(f"Starting {settings.app_name} v{settings.app_version}")
-    
-    # 验证配置
-    if not settings.debug:
-        validation_errors = settings.validate_settings()
-        if validation_errors:
-            logger.error("Configuration validation failed:")
-            for error in validation_errors:
-                logger.error(f"  - {error}")
-            raise ValueError("Invalid configuration")
-    
+
+    validation_errors = settings.validate_settings()
+    if validation_errors:
+        for error in validation_errors:
+            logger.error(f"  - {error}")
+        raise ValueError("Invalid configuration")
+
+    logger.info("Initializing database...")
+    await init_db()
+    logger.info("Database initialized.")
+
     yield
-    
-    # 关闭时执行
+
     logger.info(f"Shutting down {settings.app_name}")
 
 # 创建FastAPI应用
@@ -72,42 +72,101 @@ app.add_middleware(
     allow_headers=settings.cors_allow_headers,
 )
 
-# 添加请求日志中间件
+async def log_request_to_db(
+    method: str,
+    path: str,
+    request_body: bytes,
+    response_body: bytes,
+    status_code: int,
+    process_time: float
+):
+    """(后台任务) 异步记录请求到数据库"""
+    async with AsyncSessionLocal() as session:
+        try:
+            request_body_json = None
+            if request_body:
+                try:
+                    request_body_json = json.loads(request_body)
+                except json.JSONDecodeError:
+                    request_body_json = {"raw_body": request_body.decode('utf-8', 'ignore')}
+
+            response_body_json = None
+            if response_body:
+                try:
+                    response_body_json = json.loads(response_body)
+                except json.JSONDecodeError:
+                    response_body_json = {"raw_body": response_body.decode('utf-8', 'ignore')}
+
+            log_entry = APIRequestLog(
+                method=method,
+                path=path,
+                request_body=request_body_json,
+                status_code=status_code,
+                response_body=response_body_json,
+                response_time_ms=int(process_time * 1000)
+            )
+            session.add(log_entry)
+            await session.commit()
+        except Exception as e:
+            logger.error(f"Failed to log request to DB: {e}", exc_info=True)
+            await session.rollback()
+
 @app.middleware("http")
-async def log_requests(request, call_next):
-    """记录请求处理时间"""
+async def log_requests_middleware(request: Request, call_next):
+    """中间件：记录请求，并安全地处理请求和响应体以供后台日志记录"""
     start_time = time.time()
-    response = await call_next(request)
+
+    # 1. 安全地读取请求体一次
+    request_body = await request.body()
+
+    # 2. 创建一个新的 "receive" 函数，它将返回缓存的请求体
+    #    这使得后续的应用（如FastAPI的Pydantic解析）可以再次读取它
+    async def receive() -> Message:
+        return {"type": "http.request", "body": request_body, "more_body": False}
+
+    # 3. 创建一个新的请求对象，它使用我们伪造的 "receive" 函数
+    new_request = Request(request.scope, receive)
+
+    # 4. 使用新的请求对象调用应用
+    response = await call_next(new_request)
     process_time = time.time() - start_time
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    logger.info(f"{timestamp} - Request {request.method} {request.url.path} completed in {process_time:.4f}s")
-    return response
+
+    # 5. 安全地读取响应体一次
+    response_body = b""
+    async for chunk in response.body_iterator:
+        response_body += chunk
+
+    # 6. 创建后台任务，传递请求和响应体的字节串副本
+    task = BackgroundTask(
+        log_request_to_db,
+        method=request.method,
+        path=request.url.path,
+        request_body=request_body,
+        response_body=response_body,
+        status_code=response.status_code,
+        process_time=process_time
+    )
+
+    # 7. 返回一个新的响应，因为原始的 body_iterator 已被消耗
+    return Response(
+        content=response_body,
+        status_code=response.status_code,
+        headers=dict(response.headers),
+        media_type=response.media_type,
+        background=task
+    )
 
 # 添加全局异常处理
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     """全局异常处理器"""
     log_error(exc, f"Unhandled exception in {request.url}")
-    return JSONResponse(
-        status_code=500,
-        content={
-            "success": False,
-            "error": "Internal server error",
-            "message": "An unexpected error occurred"
-        }
-    )
+    return JSONResponse(status_code=500, content={"success": False, "error": "Internal server error"})
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
     """HTTP异常处理器"""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "success": False,
-            "error": exc.detail,
-            "message": "HTTP error occurred"
-        }
-    )
+    return JSONResponse(status_code=exc.status_code, content={"success": False, "error": exc.detail})
 
 # 添加路由
 app.include_router(router, prefix="/api")
@@ -115,58 +174,9 @@ app.include_router(router, prefix="/api")
 # 根路径
 @app.get("/")
 async def root():
-    """根路径"""
-    return {
-        "success": True,
-        "data": {
-            "service": settings.app_name,
-            "version": settings.app_version,
-            "status": "running"
-        },
-        "message": "AI Book Assistant Backend is running"
-    }
+    return {"service": settings.app_name, "version": settings.app_version, "status": "running"}
 
-# 健康检查
-@app.get("/health")
-async def health_check():
-    """健康检查"""
-    return {
-        "success": True,
-        "data": {
-            "status": "healthy",
-            "service": settings.app_name,
-            "version": settings.app_version
-        },
-        "message": "Service is healthy"
-    }
-
-# 开发信息
-if settings.debug:
-    @app.get("/debug/info")
-    async def debug_info():
-        """调试信息（仅开发环境）"""
-        return {
-            "success": True,
-            "data": {
-                "settings": {
-                    "app_name": settings.app_name,
-                    "app_version": settings.app_version,
-                    "debug": settings.debug,
-                    "host": settings.host,
-                    "port": settings.port,
-                    "gemini_model": settings.gemini_model,
-                    "cors_origins": settings.cors_origins,
-                    "cache_enabled": settings.cache_enabled,
-                    "rate_limit_enabled": settings.rate_limit_enabled
-                }
-            },
-            "message": "Debug information"
-        }
-
-def main():
-    """主函数"""
-    logger.info(f"Starting server on {settings.host}:{settings.port}")
-    
+if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host=settings.host,
@@ -174,6 +184,3 @@ def main():
         reload=settings.debug,
         log_level=settings.log_level.lower()
     )
-
-if __name__ == "__main__":
-    main()

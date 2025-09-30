@@ -23,6 +23,7 @@ class QAResponse(BaseModel):
 class BookInfoRequest(BaseModel):
     """书籍信息请求数据模型"""
     book_name: str = Field(..., description="书籍名称")
+    author: Optional[str] = Field(None, description="作者名称")
 
 class APIResponse(BaseModel):
     """通用API响应模型"""
@@ -56,3 +57,16 @@ class LikeCreate(BaseModel):
     session_id: Optional[str] = Field(None, description="会话ID")
     book_name: str = Field(..., description="书籍名称")
     message_content: str = Field(..., description="被点赞的消息内容")
+
+
+class ChatMessage(BaseModel):
+    """聊天消息模型"""
+    role: str  # "user" 或 "assistant"
+    content: str
+
+class ChatRequest(BaseModel):
+    """聊天请求模型"""
+    book_name: str
+    messages: List[ChatMessage]
+    question: str
+    session_id: Optional[str] = None

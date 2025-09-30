@@ -1,280 +1,103 @@
-from fastapi import APIRouter, HTTPException, Depends, status
-from fastapi.responses import JSONResponse
-import json
-import os
-import aiofiles
-from datetime import datetime
-from typing import Dict, Any, Optional, List
-from pydantic import BaseModel
-from api.schemas import BookInfoRequest, QARequest, APIResponse, GenerateReportRequest, ComplaintCreate, LikeCreate
+import logging
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from api.schemas import BookInfoRequest, APIResponse, GenerateReportRequest, ComplaintCreate, ChatRequest
 from services.book_service import BookService
 from services.gemini_service import GeminiService
-from services.chat_memory_service import ChatMemoryService
-from utils.helpers import create_success_response, create_error_response, log_error
+from utils.helpers import (
+    create_success_response, create_error_response, log_error, get_or_create_book,
+    async_save_qa_message, async_save_feedback
+)
+from database import get_db
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
-# 依赖注入
-def get_book_service() -> BookService:
-    """获取书籍服务实例"""
-    try:
-        gemini_service = GeminiService()
-        return BookService(gemini_service)
-    except Exception as e:
-        log_error(e, "Failed to initialize book service")
-        raise HTTPException(status_code=500, detail="Service initialization failed")
+# Dependency Injection
+def get_gemini_service() -> GeminiService:
+    return GeminiService()
+
+def get_book_service(db: AsyncSession = Depends(get_db), gemini_service: GeminiService = Depends(get_gemini_service)) -> BookService:
+    return BookService(db, gemini_service)
 
 @router.post("/book/info", response_model=APIResponse)
-async def get_book_info(
+async def get_book_introduction(
     request: BookInfoRequest,
+    background_tasks: BackgroundTasks,
     book_service: BookService = Depends(get_book_service)
 ):
-    """获取书籍信息"""
+    """获取书籍简介"""
     try:
-        book_info = await book_service.get_book_info(request.book_name)
-        
-        # The service now always returns a BookInfo object.
-        # We pass it directly to the response.
-        return create_success_response(
-            data=book_info.dict(),
-            message="Book information retrieved successfully"
-        )
-            
-    except Exception as e:
-        log_error(e, "Error getting book info")
-        return create_error_response(
-            error="Internal server error",
-            message=f"Failed to retrieve book information: {str(e)}"
-        )
+        book_info, task = await book_service.get_book_introduction(request.book_name, request.author)
+        if task:
+            background_tasks.add_task(task)
 
-@router.post("/book/qa", response_model=APIResponse)
-async def answer_question(
-    request: QARequest,
-    book_service: BookService = Depends(get_book_service)
-):
-    """回答书籍相关问题"""
-    try:
-        answer = await book_service.answer_book_question(request.book_name, request.question)
-        
-        if answer:
-            return create_success_response(
-                data={"answer": answer},
-                message="Question answered successfully"
-            )
+        if book_info:
+            logger.info(f"Book info found for '{request.book_name}'")
+            return create_success_response(data=book_info)
         else:
-            return create_error_response(
-                error="No answer generated",
-                message="Unable to generate answer for the question"
-            )
-            
-    except ValueError as e:
-        return create_error_response(
-            error=str(e),
-            message="Invalid input"
-        )
+            logger.warning(f"No introduction found for '{request.book_name}'")
+            return create_error_response("Not found", "Could not retrieve introduction for the book.")
     except Exception as e:
-        log_error(e, "Error answering question")
-        return create_error_response(
-            error="Internal server error",
-            message="Failed to answer question"
-        )
+        log_error(e, "Error getting book introduction")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/chat/generate_report", response_model=APIResponse)
 async def generate_detailed_report(
     request: GenerateReportRequest,
+    background_tasks: BackgroundTasks,
     book_service: BookService = Depends(get_book_service)
 ):
     """生成详细的书籍报告"""
     try:
-        report = await book_service.generate_detailed_report(request.book_name, request.author)
-        
-        if report:
-            return create_success_response(
-                data={"report": report},
-                message="Detailed book report generated successfully"
-            )
-        else:
-            return create_error_response(
-                error="No report generated",
-                message="Unable to generate detailed report for the book"
-            )
-            
+        report, task = await book_service.generate_detailed_report(request.book_name, request.author)
+        if task:
+            background_tasks.add_task(task)
+        return create_success_response(data={"report": report})
     except Exception as e:
         log_error(e, "Error generating detailed report")
-        return create_error_response(
-            error="Internal server error",
-            message=f"Failed to generate detailed report: {str(e)}"
-        )
-
-@router.get("/health")
-async def health_check():
-    """健康检查接口"""
-    try:
-        # 检查Gemini服务是否正常
-        gemini_service = GeminiService()
-        return create_success_response(
-            data={
-                "status": "healthy",
-                "service": "AI Book Assistant Backend",
-                "gemini_model": gemini_service.model_name
-            },
-            message="Service is running normally"
-        )
-    except Exception as e:
-        log_error(e, "Health check failed")
-        return create_error_response(
-            error="Service unhealthy",
-            message="Health check failed"
-        )
-
-@router.get("/cache/stats")
-async def get_cache_stats(book_service: BookService = Depends(get_book_service)):
-    """获取缓存统计信息"""
-    try:
-        stats = book_service.get_cache_stats()
-        return create_success_response(
-            data=stats,
-            message="Cache statistics retrieved successfully"
-        )
-    except Exception as e:
-        log_error(e, "Error getting cache stats")
-        return create_error_response(
-            error="Failed to get cache statistics",
-            message="Internal server error"
-        )
-
-@router.post("/cache/clear")
-async def clear_cache(book_service: BookService = Depends(get_book_service)):
-    """清空缓存"""
-    try:
-        book_service.clear_cache()
-        return create_success_response(
-            message="Cache cleared successfully"
-        )
-    except Exception as e:
-        log_error(e, "Error clearing cache")
-        return create_error_response(
-            error="Failed to clear cache",
-            message="Internal server error"
-        )
-
-# ===== 无状态对话API =====
-
-class ChatMessage(BaseModel):
-    """聊天消息模型"""
-    role: str  # "user" 或 "assistant"
-    content: str
-
-class ChatRequest(BaseModel):
-    """聊天请求模型"""
-    book_name: str
-    messages: List[ChatMessage]
-    question: str
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/chat/ask", response_model=APIResponse)
 async def chat_with_history(
     request: ChatRequest,
-    book_service: BookService = Depends(get_book_service)
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    gemini_service: GeminiService = Depends(get_gemini_service)
 ):
     """带历史对话的无状态问答"""
     try:
-        # 构建对话上下文
-        context_parts = []
-        for msg in request.messages:
-            if msg.role == "user":
-                context_parts.append(f"用户: {msg.content}")
-            elif msg.role == "assistant":
-                context_parts.append(f"助手: {msg.content}")
-        
-        context = "\n".join(context_parts)
-        
-        # 调用问答服务（传入上下文）
-        answer = await book_service.answer_book_question_with_context(
-            request.book_name, 
-            request.question, 
-            context
-        )
-        
+        book = await get_or_create_book(db, request.book_name)
+
+        context = "\n".join([f"{msg.role}: {msg.content}" for msg in request.messages])
+        answer = await gemini_service.answer_question_with_context(request.book_name, request.question, context)
+
         if answer:
-            return create_success_response(
-                data={"answer": answer},
-                message="Question answered successfully"
-            )
+            response_data = {"answer": answer}
+            background_tasks.add_task(async_save_qa_message, book_id=book.id, request_payload=request.dict(), response_payload=response_data)
+            return create_success_response(data=response_data)
         else:
-            return create_error_response(
-                error="No answer generated",
-                message="Unable to generate answer for the question"
-            )
+            return create_error_response(error="No answer generated")
+
     except Exception as e:
         log_error(e, "Error in chat with history")
-        return create_error_response(
-            error="Internal server error",
-            message="Failed to answer question"
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
-
-@router.post("/complaint", response_model=APIResponse)
-async def submit_complaint(request: ComplaintCreate):
-    """接收用户投诉"""
+@router.post("/feedback", response_model=APIResponse)
+async def submit_feedback(
+    request: ComplaintCreate,
+    background_tasks: BackgroundTasks
+):
+    """接收用户反馈 (投诉或点赞)"""
     try:
-        # 在真实应用中，这里应该将投诉信息保存到数据库或专门的日志系统
-        # 为了简单起见，我们只将其记录到文件中
-        complaint_data = {
-            "message_id": request.message_id,
-            "session_id": request.session_id,
-            "book_name": request.book_name,
-            "message_content": request.message_content,
-            "reasons": request.reasons,
-            "details": request.details,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-        # 将投诉信息异步写入文件
-        log_dir = "complaints"
-        os.makedirs(log_dir, exist_ok=True)
-        file_path = os.path.join(log_dir, f"complaint_{request.message_id}.json")
-        
-        async with aiofiles.open(file_path, mode='w', encoding='utf-8') as f:
-            await f.write(json.dumps(complaint_data, ensure_ascii=False, indent=2))
-            
-        return create_success_response(
-            message="Complaint submitted successfully"
-        )
-        
+        background_tasks.add_task(async_save_feedback, request_payload=request.dict())
+        return create_success_response(message="Feedback submitted successfully")
     except Exception as e:
-        log_error(e, "Error submitting complaint")
-        return create_error_response(
-            error="Internal server error",
-            message=f"Failed to submit complaint: {str(e)}"
-        )
+        log_error(e, "Error submitting feedback")
+        raise HTTPException(status_code=500, detail=str(e))
 
-
-@router.post("/like", response_model=APIResponse)
-async def submit_like(request: LikeCreate):
-    """接收用户点赞"""
-    try:
-        like_data = {
-            "message_id": request.message_id,
-            "session_id": request.session_id,
-            "book_name": request.book_name,
-            "message_content": request.message_content,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-        log_dir = "likes"
-        os.makedirs(log_dir, exist_ok=True)
-        file_path = os.path.join(log_dir, f"like_{request.message_id}.json")
-        
-        async with aiofiles.open(file_path, mode='w', encoding='utf-8') as f:
-            await f.write(json.dumps(like_data, ensure_ascii=False, indent=2))
-            
-        return create_success_response(
-            message="Like submitted successfully"
-        )
-        
-    except Exception as e:
-        log_error(e, "Error submitting like")
-        return create_error_response(
-            error="Internal server error",
-            message=f"Failed to submit like: {str(e)}"
-        )
+@router.get("/health")
+async def health_check():
+    """健康检查接口"""
+    return create_success_response(data={"status": "healthy"})

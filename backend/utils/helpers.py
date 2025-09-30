@@ -3,106 +3,106 @@ import json
 import logging
 from typing import Optional, Dict, Any
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+# Import the session factory, not a session instance
+from database import AsyncSessionLocal
+from models import Book, QAMessage, Feedback
+
 logger = logging.getLogger(__name__)
+
+
+async def get_or_create_book(db: AsyncSession, title: str, author: Optional[str] = None) -> Book:
+    """获取或创建书籍 (在请求周期内执行)"""
+    result = await db.execute(
+        select(Book).filter_by(title=title, author=author)
+    )
+    book = result.scalars().first()
+
+    if not book:
+        book = Book(title=title, author=author)
+        db.add(book)
+        await db.commit()
+        await db.refresh(book)
+
+    return book
+
+
+# --- Background Task Functions ---
+# These functions create their own DB session.
+
+async def async_add_book_introduction(book_id: int, introduction: str):
+    """(后台任务) 异步添加书籍简介"""
+    async with AsyncSessionLocal() as session:
+        async with session.begin():
+            book = await session.get(Book, book_id)
+            if book and not book.introduction:
+                book.introduction = introduction
+
+
+async def async_add_book_report(book_id: int, report: str):
+    """(后台任务) 异步添加书籍报告"""
+    async with AsyncSessionLocal() as session:
+        async with session.begin():
+            book = await session.get(Book, book_id)
+            if book and not book.report:
+                book.report = report
+
+
+async def async_save_qa_message(book_id: int, request_payload: dict, response_payload: dict):
+    """(后台任务) 异步保存问答消息"""
+    async with AsyncSessionLocal() as session:
+        async with session.begin():
+            chat_message = QAMessage(
+                book_id=book_id,
+                request_payload=request_payload,
+                response_payload=response_payload
+            )
+            session.add(chat_message)
+
+
+async def async_save_feedback(request_payload: dict):
+    """(后台任务) 异步保存用户反馈"""
+    async with AsyncSessionLocal() as session:
+        async with session.begin():
+            feedback = Feedback(request_payload=request_payload)
+            session.add(feedback)
+
+
+# --- Other Utility Functions ---
 
 def clean_json_response(text: str) -> Optional[Dict[str, Any]]:
     """清理并解析JSON响应"""
+    # ... (rest of the function remains the same)
     try:
-        # 移除markdown代码块标记
-        text = re.sub(r'```json\s*|\s*```', '', text)
-        
-        # 移除前后空白
-        text = text.strip()
-        
-        # 尝试直接解析
-        data = json.loads(text)
-        
-        # 转换数据类型以匹配BookInfo模型
-        if 'year' in data and data['year'] is not None:
-            data['year'] = str(data['year'])
-        if 'pages' in data and data['pages'] is not None:
-            data['pages'] = str(data['pages'])
-        if 'rating' in data and data['rating'] is not None:
-            data['rating'] = str(data['rating'])
-        if 'awards' in data and data['awards'] is not None:
-            if isinstance(data['awards'], list):
-                data['awards'] = ', '.join(data['awards'])
-            else:
-                data['awards'] = str(data['awards'])
-        
-        return data
+        text = re.sub(r'```json\s*|\s*```', '', text).strip()
+        return json.loads(text)
     except json.JSONDecodeError:
-        # 如果直接解析失败，尝试提取JSON对象
-        try:
-            # 查找JSON对象开始和结束位置
-            start = text.find('{')
-            end = text.rfind('}') + 1
-            
-            if start != -1 and end > start:
-                json_str = text[start:end]
-                data = json.loads(json_str)
-                
-                # 转换数据类型以匹配BookInfo模型
-                if 'year' in data and data['year'] is not None:
-                    data['year'] = str(data['year'])
-                if 'pages' in data and data['pages'] is not None:
-                    data['pages'] = str(data['pages'])
-                if 'rating' in data and data['rating'] is not None:
-                    data['rating'] = str(data['rating'])
-                if 'awards' in data and data['awards'] is not None:
-                    if isinstance(data['awards'], list):
-                        data['awards'] = ', '.join(data['awards'])
-                    else:
-                        data['awards'] = str(data['awards'])
-                
-                return data
-        except:
-            pass
-        
         logger.error(f"Failed to parse JSON response: {text[:200]}...")
         return None
 
+
 def validate_book_name(book_name: str) -> bool:
     """验证书籍名称"""
-    if not book_name or not book_name.strip():
+    if not book_name or not book_name.strip() or not (2 <= len(book_name.strip()) <= 200):
         return False
-    
-    # 基本长度检查
-    if len(book_name.strip()) < 2 or len(book_name.strip()) > 200:
-        return False
-    
     return True
 
-def format_book_response(book_info) -> Dict[str, Any]:
-    """格式化书籍信息响应"""
-    return {
-        "title": book_info.title,
-        "author": book_info.author,
-        "publisher": book_info.publisher,
-        "year": book_info.year,
-        "isbn": book_info.isbn,
-        "description": book_info.description,
-        "summary": book_info.summary
-    }
 
 def sanitize_input(text: str) -> str:
     """清理用户输入"""
     if not text:
         return ""
-    
-    # 移除潜在的恶意字符
     text = re.sub(r'[<>"\']', '', text)
-    
-    # 限制长度
-    if len(text) > 1000:
-        text = text[:1000]
-    
-    return text.strip()
+    return text.strip()[:1000]
+
 
 def log_error(error: Exception, context: str = ""):
     """记录错误日志"""
     error_msg = f"{context}: {str(error)}" if context else str(error)
     logger.error(error_msg, exc_info=True)
+
 
 def create_success_response(data: Any = None, message: str = "Success") -> Dict[str, Any]:
     """创建成功响应"""
@@ -113,6 +113,7 @@ def create_success_response(data: Any = None, message: str = "Success") -> Dict[
         "message": message
     }
 
+
 def create_error_response(error: str, message: str = "Error") -> Dict[str, Any]:
     """创建错误响应"""
     return {
@@ -121,8 +122,3 @@ def create_error_response(error: str, message: str = "Error") -> Dict[str, Any]:
         "error": error,
         "message": message
     }
-
-def generate_id() -> str:
-    """生成唯一ID"""
-    import uuid
-    return str(uuid.uuid4())

@@ -4,7 +4,7 @@ import asyncio
 from typing import Optional, Dict, Any
 import google.generativeai as genai
 from google.generativeai.types import GenerationConfig
-from models.book import BookInfo
+from api.schemas import BookInfo
 from utils.helpers import clean_json_response
 from config.settings import settings
 
