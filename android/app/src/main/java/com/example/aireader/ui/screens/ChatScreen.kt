@@ -184,7 +184,7 @@ fun SessionListComponent(
     onSessionSelect: (ClientChatSession) -> Unit,
     onSessionDelete: (String) -> Unit
 ) {
-    ModalDrawerSheet {
+    ModalDrawerSheet(modifier = Modifier.widthIn(max = 320.dp)) {
         Text(stringResource(id = R.string.sessions_title), modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleMedium)
         HorizontalDivider()
         LazyColumn {

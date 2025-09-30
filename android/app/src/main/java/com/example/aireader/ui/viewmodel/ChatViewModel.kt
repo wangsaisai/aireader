@@ -51,8 +51,15 @@ class ChatViewModel(
         viewModelScope.launch {
             val newSession = ClientChatSession(title = bookName ?: title, bookName = bookName)
             val updatedSessions = listOf(newSession) + _sessions.value
+            
+            // Persist changes first
+            repository.saveSessions(updatedSessions)
+            repository.saveCurrentSessionId(newSession.id)
+
+            // Then update the local state immediately for responsiveness
             _sessions.value = updatedSessions
-            switchSession(newSession.id)
+            _currentSession.value = newSession
+            updatePromptSuggestions(newSession)
         }
     }
 
