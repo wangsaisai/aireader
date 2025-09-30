@@ -100,7 +100,7 @@ class GeminiService:
         """回答关于书籍的问题"""
         try:
             prompt = self._build_qa_prompt(book_name, question)
-            
+
             # 生成配置
             config = GenerationConfig(
                 temperature=0.2,
@@ -134,7 +134,7 @@ class GeminiService:
         """回答关于书籍的问题（带对话上下文）"""
         try:
             prompt = self._build_qa_prompt_with_context(book_name, question, context)
-            
+
             # 生成配置
             config = GenerationConfig(
                 temperature=0.2,
@@ -177,7 +177,7 @@ class GeminiService:
             # 为长篇报告生成特定配置
             config = GenerationConfig(
                 temperature=0.2,
-                max_output_tokens=8192  # 增加Token上限以生成详细报告
+                max_output_tokens=16384  # 增加Token上限以生成详细报告
             )
 
             # 调用Gemini API
