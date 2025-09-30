@@ -63,6 +63,32 @@ class BookService:
         book_info_dict['is_found'] = True
         introduction_json = json.dumps(book_info_dict)
 
+        # Re-check if the book exists with the canonical title from Gemini
+        if not book and book_info.title:
+            stmt = select(Book).where(Book.title == book_info.title)
+            result = await self.db.execute(stmt)
+            book = result.scalars().first()
+
+            # If book found, update its aliases and any missing info
+            if book:
+                update_needed = False
+                # Update aliases
+                if not book.aliases:
+                    book.aliases = f",{title},"
+                    update_needed = True
+                elif f",{title}," not in book.aliases:
+                    book.aliases += f"{title},"
+                    update_needed = True
+
+                # Update missing author
+                if not book.author and book_info.author:
+                    book.author = book_info.author
+                    update_needed = True
+
+                if update_needed:
+                    await self.db.commit()
+                    await self.db.refresh(book)
+
         if not book:
             # Create a new book entry if it wasn't in the DB
             book = Book(
