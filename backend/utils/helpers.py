@@ -13,7 +13,7 @@ from models import Book, QAMessage, Feedback
 logger = logging.getLogger(__name__)
 
 
-async def get_or_create_book(db: AsyncSession, title: str, author: Optional[str] = None) -> Book:
+async def get_or_create_book(db: AsyncSession, title: str, author: Optional[str] = None, input_title: Optional[str] = None) -> Book:
     """获取或创建书籍 (在请求周期内执行)"""
     result = await db.execute(
         select(Book).filter_by(title=title, author=author)
@@ -21,7 +21,7 @@ async def get_or_create_book(db: AsyncSession, title: str, author: Optional[str]
     book = result.scalars().first()
 
     if not book:
-        book = Book(title=title, author=author)
+        book = Book(title=title, author=author, input_title=input_title)
         db.add(book)
         await db.commit()
         await db.refresh(book)
@@ -50,12 +50,13 @@ async def async_add_book_report(book_id: int, report: str):
                 book.report = report
 
 
-async def async_save_qa_message(book_id: int, request_payload: dict, response_payload: dict):
+async def async_save_qa_message(title: str, author: Optional[str], request_payload: dict, response_payload: dict):
     """(后台任务) 异步保存问答消息"""
     async with AsyncSessionLocal() as session:
         async with session.begin():
             chat_message = QAMessage(
-                book_id=book_id,
+                title=title,
+                author=author,
                 request_payload=request_payload,
                 response_payload=response_payload
             )

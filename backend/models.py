@@ -19,6 +19,7 @@ class Book(Base):
     __tablename__ = "books"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
+    input_title = Column(String(255))
     author = Column(String(255))
     introduction = Column(Text)
     report = Column(Text)
@@ -38,7 +39,8 @@ class Book(Base):
 class QAMessage(Base):
     __tablename__ = "qa_messages"
     id = Column(Integer, primary_key=True, index=True)
-    book_id = Column(Integer, ForeignKey("public.books.id"), nullable=False)
+    title = Column(String(255), nullable=False)
+    author = Column(String(255))
     request_payload = Column(JSONB, nullable=False)
     response_payload = Column(JSONB, nullable=False)
     created_at = Column(

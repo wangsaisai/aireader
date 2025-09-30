@@ -5,6 +5,7 @@
 CREATE TABLE books (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
+    input_title VARCHAR(255),
     author VARCHAR(255),
     introduction TEXT, -- AI-generated book introduction
     report TEXT, -- AI-generated book report
@@ -19,13 +20,14 @@ CREATE INDEX idx_books_title_author ON books (title, author);
 -- Logs the full request and response payloads for user Q&A interactions.
 CREATE TABLE qa_messages (
     id SERIAL PRIMARY KEY,
-    book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    author VARCHAR(255),
     request_payload JSONB NOT NULL, -- Stores the complete /chat request body
     response_payload JSONB NOT NULL, -- Stores the complete /chat response body
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_qa_messages_book_id ON qa_messages (book_id);
+CREATE INDEX idx_qa_messages_title_author ON qa_messages (title, author);
 
 -- 3. Feedback Table
 -- Stores user feedback (likes/dislikes) with the full request payload.

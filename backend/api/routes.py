@@ -29,7 +29,7 @@ async def get_book_introduction(
 ):
     """获取书籍简介"""
     try:
-        book_info, task = await book_service.get_book_introduction(request.book_name, request.author)
+        book_info, task = await book_service.get_book_introduction(request.book_name, request.input_title, request.author)
         if task:
             background_tasks.add_task(task)
 
@@ -68,14 +68,18 @@ async def chat_with_history(
 ):
     """带历史对话的无状态问答"""
     try:
-        book = await get_or_create_book(db, request.book_name)
-
         context = "\n".join([f"{msg.role}: {msg.content}" for msg in request.messages])
         answer = await gemini_service.answer_question_with_context(request.book_name, request.question, context)
 
         if answer:
             response_data = {"answer": answer}
-            background_tasks.add_task(async_save_qa_message, book_id=book.id, request_payload=request.dict(), response_payload=response_data)
+            background_tasks.add_task(
+                async_save_qa_message,
+                title=request.book_name,
+                author=request.author,
+                request_payload=request.dict(),
+                response_payload=response_data
+            )
             return create_success_response(data=response_data)
         else:
             return create_error_response(error="No answer generated")
