@@ -63,12 +63,12 @@ async def async_save_qa_message(title: str, author: Optional[str], request_paylo
             session.add(chat_message)
 
 
-async def async_save_feedback(request_payload: dict):
+async def async_save_feedback(feedback_type: str, request_payload: dict):
     """(后台任务) 异步保存用户反馈"""
     async with AsyncSessionLocal() as session:
         async with session.begin():
-            feedback_type = request_payload.pop('feedback_type', None)
             feedback = Feedback(
+                type=feedback_type,
                 request_payload=request_payload
             )
             session.add(feedback)

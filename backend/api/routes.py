@@ -97,7 +97,7 @@ async def submit_complaint(
     """接收用户投诉"""
     try:
         feedback_data = request.dict()
-        background_tasks.add_task(async_save_feedback, request_payload=feedback_data)
+        background_tasks.add_task(async_save_feedback, feedback_type='dislike', request_payload=feedback_data)
         return create_success_response(message="Complaint submitted successfully")
     except Exception as e:
         log_error(e, "Error submitting complaint")
@@ -112,7 +112,7 @@ async def submit_like(
     """接收用户点赞"""
     try:
         feedback_data = request.dict()
-        background_tasks.add_task(async_save_feedback, request_payload=feedback_data)
+        background_tasks.add_task(async_save_feedback, feedback_type='like', request_payload=feedback_data)
         return create_success_response(message="Like submitted successfully")
     except Exception as e:
         log_error(e, "Error submitting like")

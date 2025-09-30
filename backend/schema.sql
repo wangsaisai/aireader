@@ -35,6 +35,7 @@ CREATE TYPE feedback_type AS ENUM ('like', 'dislike');
 
 CREATE TABLE feedback (
     id SERIAL PRIMARY KEY,
+    type feedback_type NOT NULL,
     request_payload JSONB NOT NULL, -- Stores the complete /feedback request body
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
