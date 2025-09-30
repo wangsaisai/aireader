@@ -21,7 +21,7 @@ class BookService:
         self.db = db_session
         self.gemini_service = gemini_service
 
-    async def get_book_introduction(self, title: str, input_title: Optional[str] = None, author: Optional[str] = None) -> (Optional[Dict[str, Any]], BackgroundTask):
+    async def get_book_introduction(self, title: str, author: Optional[str] = None) -> (Optional[Dict[str, Any]], BackgroundTask):
         """获取书籍简介"""
         stmt = select(Book).where(
             (Book.title == title) |

@@ -29,7 +29,7 @@ async def get_book_introduction(
 ):
     """获取书籍简介"""
     try:
-        book_info, task = await book_service.get_book_introduction(request.book_name, request.input_title, request.author)
+        book_info, task = await book_service.get_book_introduction(request.book_name, request.author)
         if task:
             background_tasks.add_task(task)
 
