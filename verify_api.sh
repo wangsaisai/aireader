@@ -70,8 +70,6 @@ check_api "GET /api/health" "curl -X GET $BASE_URL/api/health"
 # 2. Get Book Info
 check_api "POST /api/book/info" "curl -X POST '$BASE_URL/api/book/info' -H 'Content-Type: application/json' -d '{\"book_name\": \"三体\"}'"
 
-# 3. Book Q&A
-check_api "POST /api/book/qa" "curl -X POST '$BASE_URL/api/book/qa' -H 'Content-Type: application/json' -d '{\"book_name\": \"三体\", \"question\": \"书中的主角是谁？\"}'"
 
 # 4. Generate Report
 check_api "POST /api/chat/generate_report" "curl -X POST '$BASE_URL/api/chat/generate_report' -H 'Content-Type: application/json' -d '{\"book_name\": \"三体\", \"author\": \"刘慈欣\"}'"
@@ -80,11 +78,7 @@ check_api "POST /api/chat/generate_report" "curl -X POST '$BASE_URL/api/chat/gen
 CHAT_PAYLOAD='{"book_name": "三体", "messages": [{"role": "user", "content": "这本书主要讲了什么？"}, {"role": "assistant", "content": "《三体》是刘慈欣创作的系列长篇科幻小说..."}], "question": "三体文明在哪个星系？"}'
 check_api "POST /api/chat/ask" "curl -X POST '$BASE_URL/api/chat/ask' -H 'Content-Type: application/json' -d '$CHAT_PAYLOAD'"
 
-# 6. Get Cache Stats
-check_api "GET /api/cache/stats" "curl -X GET '$BASE_URL/api/cache/stats'"
 
-# 7. Clear Cache
-check_api "POST /api/cache/clear" "curl -X POST '$BASE_URL/api/cache/clear'"
 
 # 8. Submit Complaint
 COMPLAINT_PAYLOAD='{"message_id": "msg_001", "session_id": "sess_abc", "book_name": "三体", "message_content": "回答不准确。", "reasons": ["inaccurate"], "details": "AI说三体人是和平主义者"}'

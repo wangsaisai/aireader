@@ -58,7 +58,7 @@ class QAMessage(Base):
 class Feedback(Base):
     __tablename__ = "feedback"
     id = Column(Integer, primary_key=True, index=True)
-    type = Column(SQLAlchemyEnum(FeedbackType), nullable=False)
+    type = Column(SQLAlchemyEnum(FeedbackType, name="feedback_type"), nullable=False)
     request_payload = Column(JSONB, nullable=False)
     created_at = Column(
         TIMESTAMP(timezone=True), server_default=func.now(), nullable=False
