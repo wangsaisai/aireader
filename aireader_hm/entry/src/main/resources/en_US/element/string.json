@@ -74,7 +74,7 @@
     },
     {
       "name": "generating_report_for",
-      "value": "Generating detailed report for \"%s\"..."
+      "value": "Generating book report..."
     },
     {
       "name": "report_generating_wait",

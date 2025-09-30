@@ -417,9 +417,6 @@ struct Index {
     const userMessage = new QAMessage(await getContext(this).resourceManager.getStringValue($r('app.string.generating_report_for', bookTitle)), 'question');
     await this.sessionManager.addMessageToCurrentSession(userMessage);
     this.loadCurrentSession();
-    const systemMessage = new QAMessage(await getContext(this).resourceManager.getStringValue($r('app.string.report_generating_wait')), 'answer');
-    await this.sessionManager.addMessageToCurrentSession(systemMessage);
-    this.loadCurrentSession();
     this.isLoading = true;
     try {
       const report = await ApiService.generateDetailedReport(bookTitle, bookAuthor);

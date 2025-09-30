@@ -74,7 +74,7 @@
     },
     {
       "name": "generating_report_for",
-      "value": "正在为《%s》生成详细报告..."
+      "value": "正在生成书籍报告..."
     },
     {
       "name": "report_generating_wait",
