@@ -66,7 +66,11 @@ async def async_save_feedback(request_payload: dict):
     """(后台任务) 异步保存用户反馈"""
     async with AsyncSessionLocal() as session:
         async with session.begin():
-            feedback = Feedback(request_payload=request_payload)
+            feedback_type = request_payload.pop('feedback_type', 'dislike')  # Default to dislike
+            feedback = Feedback(
+                request_payload=request_payload,
+                feedback_type=feedback_type
+            )
             session.add(feedback)
 
 

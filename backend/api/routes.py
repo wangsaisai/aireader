@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.schemas import BookInfoRequest, APIResponse, GenerateReportRequest, ComplaintCreate, ChatRequest
+from api.schemas import BookInfoRequest, APIResponse, GenerateReportRequest, ComplaintCreate, ChatRequest, LikeCreate
 from services.book_service import BookService
 from services.gemini_service import GeminiService
 from utils.helpers import (
@@ -84,18 +84,38 @@ async def chat_with_history(
         log_error(e, "Error in chat with history")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/feedback", response_model=APIResponse)
-async def submit_feedback(
+
+@router.post("/complaint", response_model=APIResponse)
+async def submit_complaint(
     request: ComplaintCreate,
     background_tasks: BackgroundTasks
 ):
-    """接收用户反馈 (投诉或点赞)"""
+    """接收用户投诉"""
     try:
-        background_tasks.add_task(async_save_feedback, request_payload=request.dict())
-        return create_success_response(message="Feedback submitted successfully")
+        feedback_data = request.dict()
+        feedback_data['feedback_type'] = 'dislike'
+        background_tasks.add_task(async_save_feedback, request_payload=feedback_data)
+        return create_success_response(message="Complaint submitted successfully")
     except Exception as e:
-        log_error(e, "Error submitting feedback")
+        log_error(e, "Error submitting complaint")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/like", response_model=APIResponse)
+async def submit_like(
+    request: LikeCreate,
+    background_tasks: BackgroundTasks
+):
+    """接收用户点赞"""
+    try:
+        feedback_data = request.dict()
+        feedback_data['feedback_type'] = 'like'
+        background_tasks.add_task(async_save_feedback, request_payload=feedback_data)
+        return create_success_response(message="Like submitted successfully")
+    except Exception as e:
+        log_error(e, "Error submitting like")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/health")
 async def health_check():
